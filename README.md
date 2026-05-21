@@ -1,3 +1,5 @@
+> 🌐 Read this in: **English** | [ภาษาไทย](README.th.md)
+
 # xlibrary
 
 Record browser interactions and generate [Robot Framework](https://robotframework.org/) + [Browser Library](https://github.com/MarketSquare/robotframework-browser) `.robot` files — powered by [Playwright](https://playwright.dev/).
