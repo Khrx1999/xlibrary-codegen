@@ -1,0 +1,19 @@
+{
+  "actions": [
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "assertText",
+        "selector": "css=#status-label",
+        "text": "Success",
+        "substring": true,
+        "signals": []
+      },
+      "startTime": 0
+    }
+  ]
+}

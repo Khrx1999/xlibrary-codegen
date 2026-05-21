@@ -1,0 +1,18 @@
+{
+  "actions": [
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "select",
+        "selector": "css=#country",
+        "options": ["France"],
+        "signals": []
+      },
+      "startTime": 0
+    }
+  ]
+}

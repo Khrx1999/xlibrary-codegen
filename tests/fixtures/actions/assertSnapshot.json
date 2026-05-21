@@ -1,0 +1,18 @@
+{
+  "actions": [
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "assertSnapshot",
+        "selector": "css=main",
+        "ariaSnapshot": "- heading \"Welcome\" [level=1]\n- button \"Submit\"",
+        "signals": []
+      },
+      "startTime": 0
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "actions": [
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "closePage",
+        "signals": []
+      },
+      "startTime": 0
+    }
+  ]
+}

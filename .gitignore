@@ -1,0 +1,37 @@
+# ── Node / TypeScript ──────────────────────────────────────────────────
+node_modules/
+dist/
+*.tsbuildinfo
+*.log
+
+# ── Build / pack artifacts ─────────────────────────────────────────────
+*.tgz
+
+# ── Test outputs ───────────────────────────────────────────────────────
+coverage/
+.vitest/
+RESULTS/                # Robot Framework test outputs (log.html, output.xml, …)
+playwright-log.txt      # Playwright recorder log (regenerated each run)
+
+# ── Caches ─────────────────────────────────────────────────────────────
+.npm/
+.cache/
+.eslintcache
+
+# ── Local environment / overrides ──────────────────────────────────────
+.env
+.env.local
+*.local
+
+# ── OS / editor ────────────────────────────────────────────────────────
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# ── Read-only vendored reference ───────────────────────────────────────
+# vendor/playwright is a 105 MB local clone used purely for code review
+# (regex patterns reference its internals). Contributors who need it can
+# clone manually — see CONTRIBUTING.md "Optional: Playwright reference".
+vendor/

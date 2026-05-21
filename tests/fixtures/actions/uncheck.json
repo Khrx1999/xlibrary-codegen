@@ -1,0 +1,17 @@
+{
+  "actions": [
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "uncheck",
+        "selector": "css=#subscribe",
+        "signals": []
+      },
+      "startTime": 0
+    }
+  ]
+}

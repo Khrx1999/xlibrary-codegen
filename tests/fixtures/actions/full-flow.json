@@ -1,0 +1,76 @@
+{
+  "actions": [
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "openPage",
+        "url": "https://example.com/login",
+        "signals": []
+      },
+      "startTime": 0
+    },
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "fill",
+        "selector": "css=#username",
+        "text": "admin",
+        "signals": []
+      },
+      "startTime": 0
+    },
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "fill",
+        "selector": "css=#password",
+        "text": "secret",
+        "signals": []
+      },
+      "startTime": 0
+    },
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "click",
+        "selector": "css=#login-btn",
+        "button": "left",
+        "modifiers": 0,
+        "clickCount": 1,
+        "signals": []
+      },
+      "startTime": 0
+    },
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "assertText",
+        "selector": "css=#welcome-banner",
+        "text": "Welcome admin",
+        "substring": false,
+        "signals": []
+      },
+      "startTime": 0
+    }
+  ]
+}

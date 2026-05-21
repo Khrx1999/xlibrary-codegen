@@ -1,0 +1,17 @@
+{
+  "actions": [
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "check",
+        "selector": "css=#agree-terms",
+        "signals": []
+      },
+      "startTime": 0
+    }
+  ]
+}

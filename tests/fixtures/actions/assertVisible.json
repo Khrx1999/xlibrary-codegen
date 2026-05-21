@@ -1,0 +1,17 @@
+{
+  "actions": [
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "assertVisible",
+        "selector": "css=#success-msg",
+        "signals": []
+      },
+      "startTime": 0
+    }
+  ]
+}

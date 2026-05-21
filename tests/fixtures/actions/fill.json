@@ -1,0 +1,18 @@
+{
+  "actions": [
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "fill",
+        "selector": "css=#username",
+        "text": "testuser",
+        "signals": []
+      },
+      "startTime": 0
+    }
+  ]
+}

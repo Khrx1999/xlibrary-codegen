@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>xlibrary — Live Preview</title>
+
+  <!-- Prism Coy theme (light, low-contrast) — pairs with the light app theme -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-coy.min.css"
+    crossorigin="anonymous"
+  />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #ffffff;
+      --surface:      #f9fafb;
+      --surface-2:    #f3f4f6;
+      --border:       #e5e7eb;
+      --border-strong:#d1d5db;
+      --text:         #111827;
+      --text-muted:   #6b7280;
+      --text-subtle:  #9ca3af;
+      --accent:       #0f766e;   /* teal-700 */
+      --accent-hover: #115e59;
+      --accent-soft:  #ccfbf1;
+      --success:      #059669;
+      --success-soft: #ecfdf5;
+      --warning:      #d97706;
+      --warning-soft: #fffbeb;
+      --danger:       #dc2626;
+      --danger-soft:  #fef2f2;
+      --info:         #3b82f6;
+      --info-soft:    #eff6ff;
+      --code-bg:      #fafafa;
+
+      --radius-sm: 4px;
+      --radius:    6px;
+      --radius-lg: 8px;
+
+      --shadow-sm: 0 1px 2px rgba(15,23,42,.04);
+      --shadow:    0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+      --shadow-lg: 0 4px 12px rgba(15,23,42,.08);
+
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", system-ui, sans-serif;
+      --font-mono: "SF Mono", "JetBrains Mono", "Cascadia Code", "Menlo", Consolas, monospace;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body { display: flex; flex-direction: column; }
+
+    /* ─── App header ─────────────────────────────────────────────────────── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.005em;
+    }
+
+    .brand-logo {
+      width: 22px;
+      height: 22px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--accent), #14b8a6);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      box-shadow: var(--shadow-sm);
+    }
+    .brand-logo svg { width: 13px; height: 13px; }
+
+    .conn-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+      padding: 3px 9px;
+      border-radius: 9999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+    .conn-indicator::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--text-subtle);
+      transition: background .2s;
+    }
+    .conn-indicator.live::before { background: var(--success); }
+    .conn-indicator.live { color: var(--success); background: var(--success-soft); border-color: transparent; }
+
+    #action-count {
+      font-size: 11px;
+      color: var(--text-muted);
+      padding: 3px 9px;
+      border-radius: 9999px;
+      background: var(--surface);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ─── Replay toolbar ─────────────────────────────────────────────────── */
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 18px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg);
+      color: #374151;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: var(--radius);
+      font: 500 12.5px/1 var(--font-sans);
+      cursor: pointer;
+      transition: background .12s ease, border-color .12s ease, color .12s ease, box-shadow .12s ease, opacity .12s ease;
+    }
+    .btn:hover:not(:disabled) {
+      background: var(--surface);
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-sm);
+    }
+    .btn:active:not(:disabled) { background: var(--surface-2); }
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .btn.primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    .btn.primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+    .btn.danger {
+      color: var(--danger);
+      border-color: #fecaca;
+    }
+    .btn.danger:hover:not(:disabled) {
+      background: var(--danger-soft);
+      border-color: #fca5a5;
+      color: #991b1b;
+    }
+    .btn svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    #replay-status {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #replay-progress {
+      color: #374151;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-variant-numeric: tabular-nums;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 11px 4px 9px;
+      border-radius: 9999px;
+      background: var(--surface-2);
+      color: #374151;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--text-subtle);
+      flex-shrink: 0;
+    }
+    .badge.idle::before    { background: var(--text-subtle); }
+    .badge.running         { background: var(--info-soft);    color: #1d4ed8; }
+    .badge.running::before { background: var(--info); animation: pulse 1.2s ease-in-out infinite; }
+    .badge.paused          { background: var(--warning-soft); color: #92400e; }
+    .badge.paused::before  { background: var(--warning); }
+    .badge.complete        { background: var(--success-soft); color: #047857; }
+    .badge.complete::before{ background: var(--success); }
+    .badge.error           { background: var(--danger-soft);  color: #b91c1c; }
+    .badge.error::before   { background: var(--danger); }
+    .badge.stopped         { background: var(--surface); color: #4b5563; }
+    .badge.stopped::before { background: var(--text-muted); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    /* ─── Code area ──────────────────────────────────────────────────────── */
+    main {
+      flex: 1;
+      overflow: auto;
+      padding: 24px 28px;
+      background: var(--bg);
+    }
+
+    pre[class*="language-"] {
+      background: transparent !important;
+      margin: 0;
+      padding: 0;
+      box-shadow: none !important;
+    }
+    pre[class*="language-"]::before,
+    pre[class*="language-"]::after {
+      display: none !important;
+    }
+
+    code[class*="language-"] {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.7;
+      tab-size: 4;
+      white-space: pre;
+      color: var(--text);
+    }
+
+    /* Robot Framework section headers stand out a bit more */
+    .token.keyword  { color: #7c3aed !important; }
+    .token.string   { color: #047857 !important; }
+    .token.comment  { color: var(--text-subtle) !important; font-style: italic; }
+    .token.function { color: #1d4ed8 !important; }
+
+    /* ─── Placeholder ────────────────────────────────────────────────────── */
+    #placeholder {
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.7;
+      max-width: 480px;
+      padding: 28px 0;
+    }
+    #placeholder strong { color: var(--text); font-weight: 600; }
+    #placeholder kbd {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-bottom-width: 2px;
+      border-radius: 4px;
+      padding: 1px 6px;
+      color: var(--text);
+    }
+
+    /* ─── Error toast ────────────────────────────────────────────────────── */
+    #error-toast {
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      background: var(--bg);
+      color: var(--text);
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--danger);
+      border-radius: var(--radius);
+      font-size: 12px;
+      line-height: 1.5;
+      max-width: 480px;
+      box-shadow: var(--shadow-lg);
+      display: none;
+    }
+    #error-toast.show { display: flex; gap: 10px; align-items: flex-start; }
+    #error-toast svg { color: var(--danger); flex-shrink: 0; margin-top: 1px; }
+  </style>
+</head>
+<body>
+  <!-- Header ─────────────────────────────────────────────────────────── -->
+  <header>
+    <span class="brand">
+      <span class="brand-logo">
+        <!-- robot/bot icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/>
+          <path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>
+        </svg>
+      </span>
+      xlibrary <span style="color:var(--text-muted);font-weight:500;">— Live Preview</span>
+    </span>
+    <span class="conn-indicator" id="conn">
+      <span id="status">connecting</span>
+    </span>
+    <span id="action-count"></span>
+  </header>
+
+  <!-- Replay toolbar ─────────────────────────────────────────────────── -->
+  <div id="toolbar" role="toolbar" aria-label="Replay controls">
+    <button class="btn primary" id="btn-replay" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+      <span>Replay</span>
+    </button>
+    <button class="btn" id="btn-pause" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></svg>
+      <span>Pause</span>
+    </button>
+    <button class="btn" id="btn-resume" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+      <span>Resume</span>
+    </button>
+    <button class="btn" id="btn-step" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" x2="19" y1="5" y2="19"/></svg>
+      <span>Step</span>
+    </button>
+    <button class="btn danger" id="btn-stop" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="5" y="5" rx="2"/></svg>
+      <span>Stop</span>
+    </button>
+    <div id="replay-status">
+      <span id="replay-progress"></span>
+      <span class="badge idle" id="replay-badge">idle</span>
+    </div>
+  </div>
+
+  <!-- Code area ──────────────────────────────────────────────────────── -->
+  <main id="main">
+    <div id="placeholder">
+      <strong>Waiting for the recorder…</strong><br>
+      Interact in the Playwright browser window to see your test build up here in real time.
+      Use the toolbar above (or the one at the bottom of the Inspector window) to
+      <strong>replay</strong> the recorded actions step-by-step before running them with
+      <kbd>robot file.robot</kbd>.
+    </div>
+    <pre class="language-python" style="display:none" id="pre"><code class="language-python" id="code"></code></pre>
+  </main>
+
+  <!-- Error toast ────────────────────────────────────────────────────── -->
+  <div id="error-toast" role="alert" aria-live="polite">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true">
+      <circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>
+    </svg>
+    <span id="error-text"></span>
+  </div>
+
+  <!-- Prism ──────────────────────────────────────────────────────────── -->
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"
+    crossorigin="anonymous"
+  ></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"
+    crossorigin="anonymous"
+  ></script>
+
+  <script>
+    const connEl        = document.getElementById('conn');
+    const statusEl      = document.getElementById('status');
+    const actionCountEl = document.getElementById('action-count');
+    const placeholderEl = document.getElementById('placeholder');
+    const preEl         = document.getElementById('pre');
+    const codeEl        = document.getElementById('code');
+
+    const btnReplay = document.getElementById('btn-replay');
+    const btnPause  = document.getElementById('btn-pause');
+    const btnResume = document.getElementById('btn-resume');
+    const btnStep   = document.getElementById('btn-step');
+    const btnStop   = document.getElementById('btn-stop');
+    const badgeEl   = document.getElementById('replay-badge');
+    const progressEl = document.getElementById('replay-progress');
+    const toastEl   = document.getElementById('error-toast');
+    const errorText = document.getElementById('error-text');
+
+    let ws;
+    let reconnectDelay = 1000;  // ms; doubles on each failure, capped at 15 s
+    let lastContent = '';
+    let totalActions = 0;
+
+    // Count keyword-call lines (4-space indented, non-comment, non-lifecycle)
+    function countActions(robotText) {
+      return robotText
+        .split('\n')
+        .filter(l => /^    \S/.test(l) &&
+                     !l.trim().startsWith('#') &&
+                     !['New Browser', 'New Context', 'Close Browser']
+                        .some(kw => l.trim().startsWith(kw)))
+        .length;
+    }
+
+    function updateDisplay(content) {
+      lastContent = content;
+
+      totalActions = countActions(content);
+      actionCountEl.textContent = totalActions > 0 ? `${totalActions} action${totalActions !== 1 ? 's' : ''}` : '';
+      btnReplay.disabled = totalActions === 0 || isActiveReplay();
+
+      if (!content.trim()) return;
+
+      placeholderEl.style.display = 'none';
+      preEl.style.display = '';
+      codeEl.textContent = content;
+      Prism.highlightElement(codeEl);
+
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    // ── Replay state ─────────────────────────────────────────────────────────
+    let replayStatus = 'idle';
+
+    function isActiveReplay() {
+      return replayStatus === 'running' || replayStatus === 'paused';
+    }
+
+    function applyReplayState(state) {
+      replayStatus = state.status;
+      badgeEl.className = 'badge ' + state.status;
+      badgeEl.textContent = state.status;
+
+      if (state.totalActions > 0) {
+        const idx = state.currentIndex >= 0 ? state.currentIndex + 1 : 0;
+        progressEl.textContent =
+          (state.currentName ? state.currentName + '  •  ' : '') +
+          idx + ' / ' + state.totalActions;
+      } else {
+        progressEl.textContent = '';
+      }
+
+      btnReplay.disabled = !(state.status === 'idle' || state.status === 'complete' || state.status === 'stopped' || state.status === 'error') || totalActions === 0;
+      btnPause.disabled   = state.status !== 'running';
+      btnResume.disabled  = state.status !== 'paused';
+      btnStep.disabled    = state.status !== 'paused' && state.status !== 'running';
+      btnStop.disabled    = state.status !== 'running' && state.status !== 'paused';
+
+      if (state.status === 'error' && state.errorMessage) {
+        showError(state.errorMessage);
+      } else {
+        hideError();
+      }
+    }
+
+    function showError(msg) {
+      errorText.textContent = msg;
+      toastEl.classList.add('show');
+    }
+    function hideError() {
+      toastEl.classList.remove('show');
+    }
+
+    function sendCommand(type) {
+      if (!ws || ws.readyState !== 1) return;
+      ws.send(JSON.stringify({ type }));
+    }
+
+    btnReplay.addEventListener('click', () => sendCommand('replay-start'));
+    btnPause .addEventListener('click', () => sendCommand('replay-pause'));
+    btnResume.addEventListener('click', () => sendCommand('replay-resume'));
+    btnStep  .addEventListener('click', () => sendCommand('replay-step'));
+    btnStop  .addEventListener('click', () => sendCommand('replay-stop'));
+
+    // ── WebSocket plumbing ───────────────────────────────────────────────────
+    function connect() {
+      ws = new WebSocket(`ws://${location.host}`);
+
+      ws.addEventListener('open', () => {
+        reconnectDelay = 1000;
+        connEl.classList.add('live');
+        statusEl.textContent = 'live';
+      });
+
+      ws.addEventListener('message', (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === 'update' && msg.content !== lastContent) {
+            updateDisplay(msg.content);
+          } else if (msg.type === 'replay-state' && msg.state) {
+            applyReplayState(msg.state);
+          }
+        } catch {
+          // ignore malformed message
+        }
+      });
+
+      ws.addEventListener('close', () => {
+        connEl.classList.remove('live');
+        statusEl.textContent = `reconnecting in ${(reconnectDelay / 1000).toFixed(0)}s`;
+        setTimeout(connect, reconnectDelay);
+        reconnectDelay = Math.min(reconnectDelay * 2, 15000);
+      });
+
+      ws.addEventListener('error', () => {
+        ws.close();
+      });
+    }
+
+    connect();
+  </script>
+</body>
+</html>

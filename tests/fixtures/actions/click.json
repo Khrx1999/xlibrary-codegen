@@ -1,0 +1,20 @@
+{
+  "actions": [
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "click",
+        "selector": "css=#submit-btn",
+        "button": "left",
+        "modifiers": 0,
+        "clickCount": 1,
+        "signals": []
+      },
+      "startTime": 0
+    }
+  ]
+}

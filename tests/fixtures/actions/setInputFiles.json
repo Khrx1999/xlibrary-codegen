@@ -1,0 +1,18 @@
+{
+  "actions": [
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "setInputFiles",
+        "selector": "css=#file-input",
+        "files": ["/path/to/upload.pdf"],
+        "signals": []
+      },
+      "startTime": 0
+    }
+  ]
+}

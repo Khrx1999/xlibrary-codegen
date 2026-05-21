@@ -1,0 +1,18 @@
+{
+  "actions": [
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "assertValue",
+        "selector": "css=#email-input",
+        "value": "user@example.com",
+        "signals": []
+      },
+      "startTime": 0
+    }
+  ]
+}

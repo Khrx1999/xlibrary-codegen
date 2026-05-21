@@ -1,0 +1,105 @@
+{
+  "name": "xlibrary",
+  "version": "0.1.6",
+  "description": "Robot Framework + Browser Library codegen — mirror of Playwright codegen that emits .robot files",
+  "license": "MIT",
+  "author": {
+    "name": "Tassana Khrueawan",
+    "email": "Tassana.khr@gmail.com",
+    "url": "https://github.com/Khrx1999"
+  },
+  "homepage": "https://github.com/Khrx1999/xlibrary#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Khrx1999/xlibrary.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Khrx1999/xlibrary/issues"
+  },
+  "type": "module",
+  "bin": {
+    "xlibrary": "dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./codegen": {
+      "import": "./dist/codegen/index.js",
+      "types": "./dist/codegen/index.d.ts"
+    },
+    "./recorder": {
+      "import": "./dist/recorder/index.js",
+      "types": "./dist/recorder/index.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types.js",
+      "types": "./dist/types.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "tools/viewer/**",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && tsc -p tsconfig.json && chmod +x dist/cli.js",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky || true",
+    "prepublishOnly": "npm run typecheck && npm run lint && npm run build && npm test"
+  },
+  "keywords": [
+    "robot-framework",
+    "browser-library",
+    "playwright",
+    "codegen",
+    "test-automation",
+    "recorder"
+  ],
+  "dependencies": {
+    "commander": "^12.1.0",
+    "playwright-core": ">=1.49.0 <1.61.0",
+    "ws": "^8.20.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0",
+    "eslint": "^9.15.0",
+    "eslint-config-prettier": "^9.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.15.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,js}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  }
+}

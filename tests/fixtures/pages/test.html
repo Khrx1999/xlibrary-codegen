@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Robot Codegen Test Page</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: .25rem; }
+    input, select { padding: .4rem; width: 200px; }
+    button { padding: .5rem 1.5rem; cursor: pointer; }
+    #result { margin-top: 1rem; color: green; display: none; }
+  </style>
+</head>
+<body>
+  <h1 id="heading">Robot Codegen Test Page</h1>
+
+  <form id="login-form" onsubmit="handleSubmit(event)">
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input id="username" type="text" placeholder="Enter username" />
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="Enter password" />
+    </div>
+
+    <div class="form-group">
+      <label for="country">Country</label>
+      <select id="country">
+        <option value="">-- Select --</option>
+        <option value="fr">France</option>
+        <option value="de">Germany</option>
+        <option value="th">Thailand</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>
+        <input id="agree-terms" type="checkbox" />
+        I agree to the terms
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label>
+        <input id="subscribe" type="checkbox" checked />
+        Subscribe to newsletter
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label for="file-input">Upload file</label>
+      <input id="file-input" type="file" />
+    </div>
+
+    <div class="form-group">
+      <input id="search-input" type="text" placeholder="Search…" />
+    </div>
+
+    <button id="submit-btn" type="submit">Submit</button>
+  </form>
+
+  <div id="result">Form submitted successfully!</div>
+  <div id="welcome-banner" style="display:none">Welcome admin</div>
+  <div id="success-msg" style="display:none">Operation succeeded</div>
+
+  <div id="dropdown-trigger" style="cursor:pointer; padding:.5rem; border:1px solid #ccc; display:inline-block">
+    Hover me ▾
+  </div>
+  <div id="dropdown-menu" style="display:none; padding:.5rem; border:1px solid #ccc;">
+    <a href="#">Option 1</a>
+  </div>
+
+  <script>
+    function handleSubmit(e) {
+      e.preventDefault();
+      document.getElementById('result').style.display = 'block';
+      document.getElementById('welcome-banner').style.display = 'block';
+      document.getElementById('success-msg').style.display = 'block';
+    }
+
+    document.getElementById('dropdown-trigger').addEventListener('mouseenter', function () {
+      document.getElementById('dropdown-menu').style.display = 'block';
+    });
+    document.getElementById('dropdown-trigger').addEventListener('mouseleave', function () {
+      document.getElementById('dropdown-menu').style.display = 'none';
+    });
+  </script>
+</body>
+</html>

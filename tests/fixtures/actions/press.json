@@ -1,0 +1,19 @@
+{
+  "actions": [
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "press",
+        "selector": "css=#search-input",
+        "key": "Enter",
+        "modifiers": 0,
+        "signals": []
+      },
+      "startTime": 0
+    }
+  ]
+}
