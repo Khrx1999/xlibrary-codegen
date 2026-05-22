@@ -72,42 +72,28 @@ function renderSelenium(fixtureName: string): string {
 // Robot Framework — step counter basics
 // ---------------------------------------------------------------------------
 
-describe('RF emitter — xlib:step markers (no alternatives)', () => {
-  it('click action has # xlib:step=1', () => {
+describe('RF emitter — clean output without alternatives', () => {
+  // v0.2.1 design change: bare `# xlib:step=N` lines were too noisy in practice.
+  // The emitter now ONLY emits the xlib comment when there's a meaningful
+  // `alts=[...]` payload (i.e. when JSONL-bridge mode populates alternatives).
+  // Direct-mode output is clean — no marker clutter.
+
+  it('click action with no alternatives → no xlib comment', () => {
     const gen = new RobotFrameworkLanguageGenerator();
     const actions = loadFixture('click');
     const output = generateFull(gen, actions);
-    expect(output).toContain('    # xlib:step=1');
+    expect(output).not.toContain('# xlib:step');
+    expect(output).toContain('Click'); // keyword still emitted
   });
 
-  it('step counter is monotonic across multiple actions', () => {
+  it('full flow with no alternatives → no xlib comments anywhere', () => {
     const gen = new RobotFrameworkLanguageGenerator();
     const actions = loadFixture('full-flow');
     const output = generateFull(gen, actions);
-    expect(output).toContain('# xlib:step=1');
-    expect(output).toContain('# xlib:step=2');
-    expect(output).toContain('# xlib:step=3');
-    expect(output).toContain('# xlib:step=4');
-    expect(output).toContain('# xlib:step=5');
-    expect(output).not.toContain('# xlib:step=6');
+    expect(output).not.toContain('# xlib:step');
   });
 
-  it('generateHeader() resets the step counter', () => {
-    const gen = new RobotFrameworkLanguageGenerator();
-    const actions = loadFixture('click');
-
-    // First render
-    const first = generateFull(gen, actions);
-    expect(first).toContain('# xlib:step=1');
-    expect(first).not.toContain('# xlib:step=2');
-
-    // Second render — header should reset to step=1
-    const second = generateFull(gen, actions);
-    expect(second).toContain('# xlib:step=1');
-    expect(second).not.toContain('# xlib:step=2');
-  });
-
-  it('openPage(about:blank) does NOT consume a step number', () => {
+  it('openPage(about:blank) is still skipped (no step consumed)', () => {
     const gen = new RobotFrameworkLanguageGenerator();
     const actions: ActionInContext[] = [
       {
@@ -126,8 +112,9 @@ describe('RF emitter — xlib:step markers (no alternatives)', () => {
     const nav = gen.generateAction(actions[1] as never);
 
     void header;
-    expect(blank).toBe(''); // openPage(about:blank) is skipped — no step consumed
-    expect(nav).toContain('# xlib:step=1'); // navigate collapses to New Page, step=1
+    expect(blank).toBe(''); // openPage(about:blank) is skipped — no output
+    expect(nav).toContain('New Page'); // navigate collapses to New Page
+    expect(nav).not.toContain('# xlib:step'); // no marker (no alts)
   });
 });
 
@@ -194,11 +181,13 @@ describe('RF emitter — xlib:step + alts (with alternatives[])', () => {
     const header = gen.generateHeader(defaultOptions);
     const step = gen.generateAction(singleAltActions[0] as never);
     void header;
-    expect(step).toContain('# xlib:step=1');
+    // v0.2.1: single-candidate steps emit NO xlib comment (alts list is empty
+    // after filtering the primary → nothing meaningful to record).
+    expect(step).not.toContain('# xlib:step');
     expect(step).not.toContain(';alts=');
   });
 
-  it('action with no alternatives field → step-only (graceful degrade)', () => {
+  it('action with no alternatives field → no xlib comment (clean output)', () => {
     const gen = new RobotFrameworkLanguageGenerator();
     gen.generateHeader(defaultOptions);
     const step = gen.generateAction({
@@ -214,7 +203,7 @@ describe('RF emitter — xlib:step + alts (with alternatives[])', () => {
       },
       startTime: 0,
     } as never);
-    expect(step).toContain('# xlib:step=1');
+    expect(step).not.toContain('# xlib:step');
     expect(step).not.toContain(';alts=');
   });
 });
@@ -229,7 +218,7 @@ describe('Selenium emitter — xlib:step markers', () => {
     expect(output).toBe(loadSnapshot('click-with-alts.selenium'));
   });
 
-  it('click action has # xlib:step=1', () => {
+  it('click action with no alternatives → no xlib comment (clean output)', () => {
     const gen = new SeleniumLibraryLanguageGenerator();
     gen.generateHeader(defaultOptions);
     const step = gen.generateAction({
@@ -244,10 +233,10 @@ describe('Selenium emitter — xlib:step markers', () => {
       },
       startTime: 0,
     } as unknown as Parameters<typeof gen.generateAction>[0]);
-    expect(step).toContain('# xlib:step=1');
+    expect(step).not.toContain('# xlib:step');
   });
 
-  it('step counter increments correctly across multiple actions', () => {
+  it('multi-action flow with no alternatives produces no xlib comments', () => {
     const gen = new SeleniumLibraryLanguageGenerator();
     gen.generateHeader(defaultOptions);
     const a1 = gen.generateAction({
@@ -267,14 +256,14 @@ describe('Selenium emitter — xlib:step markers', () => {
       },
       startTime: 0,
     } as unknown as Parameters<typeof gen.generateAction>[0]);
-    expect(a1).toContain('# xlib:step=1');
-    expect(a2).toContain('# xlib:step=2');
+    expect(a1).not.toContain('# xlib:step');
+    expect(a2).not.toContain('# xlib:step');
   });
 
-  it('generateHeader() resets Selenium step counter', () => {
+  it('generateHeader() resets the captured-actions snapshot', () => {
     const gen = new SeleniumLibraryLanguageGenerator();
     gen.generateHeader(defaultOptions);
-    const a1 = gen.generateAction({
+    gen.generateAction({
       frame: { pageGuid: 'g', pageAlias: 'page', framePath: [] },
       action: {
         name: 'click',
@@ -286,11 +275,13 @@ describe('Selenium emitter — xlib:step markers', () => {
       },
       startTime: 0,
     } as unknown as Parameters<typeof gen.generateAction>[0]);
-    expect(a1).toContain('# xlib:step=1');
+    expect(gen.getCapturedActions()).toHaveLength(1);
 
-    // Reset via generateHeader — counter should restart from 1
+    // generateHeader resets the captured-actions array AND the step counter.
     gen.generateHeader(defaultOptions);
-    const a2 = gen.generateAction({
+    expect(gen.getCapturedActions()).toHaveLength(0);
+
+    gen.generateAction({
       frame: { pageGuid: 'g', pageAlias: 'page', framePath: [] },
       action: {
         name: 'click',
@@ -302,6 +293,7 @@ describe('Selenium emitter — xlib:step markers', () => {
       },
       startTime: 0,
     } as unknown as Parameters<typeof gen.generateAction>[0]);
-    expect(a2).toContain('# xlib:step=1'); // reset to 1, not 2
+    // After reset + 1 new action, captured = 1 again (not 2)
+    expect(gen.getCapturedActions()).toHaveLength(1);
   });
 });

@@ -299,6 +299,7 @@ export async function runRecorder(options: RobotCodegenOptions): Promise<void> {
 
   // ── Initialise the generator ──────────────────────────────────────────────
   const generator = new RobotFrameworkLanguageGenerator(testName);
+  const seleniumGenerator = new SeleniumLibraryLanguageGenerator(testName);
 
   const generatorOptions: LanguageGeneratorOptions = {
     browserName,
@@ -320,7 +321,7 @@ export async function runRecorder(options: RobotCodegenOptions): Promise<void> {
   // fall back to JSONL bridge mode (still works, just shows JSONL in the
   // Inspector window instead of `.robot`).
   registerLanguageGenerator(generator);
-  registerLanguageGenerator(new SeleniumLibraryLanguageGenerator(testName));
+  registerLanguageGenerator(seleniumGenerator);
   const directMode = wasBundlePatchSuccessful();
 
   if (directMode) {
@@ -438,12 +439,14 @@ export async function runRecorder(options: RobotCodegenOptions): Promise<void> {
     // Push full content to viewer (recorder writes complete file each time).
     viewer?.broadcast(content);
 
-    // Snapshot the action list for the Replay button.
-    // Only available for the Robot Framework generator (direct mode, robot lang).
-    // For ts/python/selenium the built-in Playwright emitter owns the output;
-    // we don't have an RF generator instance to query.
+    // Snapshot the action list for the Replay button. xlibrary owns the
+    // robot + selenium emitters, so both expose getCapturedActions(). For
+    // ts/python the built-in Playwright emitter owns the output — we have
+    // no captured action stream there, so Replay is disabled.
     if (lang === 'robot') {
       latestActions = generator.getCapturedActions();
+    } else if (lang === 'selenium') {
+      latestActions = seleniumGenerator.getCapturedActions();
     }
   }
 

@@ -121,6 +121,18 @@ export class SeleniumLibraryLanguageGenerator {
   // output. Reset to 0 in generateHeader() at the start of each render pass.
   private _stepCounter = 0;
 
+  // ── Action capture for Replay ────────────────────────────────────────────
+  //
+  // Every call to generateAction() that produces output appends the action
+  // to this array. The runner reads `getCapturedActions()` to drive the
+  // viewer's Replay button — same contract as RobotFrameworkLanguageGenerator.
+  private _capturedActions: ActionInContext[] = [];
+
+  /** Return the full action list captured during this render pass. */
+  getCapturedActions(): ActionInContext[] {
+    return this._capturedActions;
+  }
+
   // ───────────────────────────────────────────────────────────────────────────
   // generateHeader
   // ───────────────────────────────────────────────────────────────────────────
@@ -132,7 +144,8 @@ export class SeleniumLibraryLanguageGenerator {
    * (handled in generateAction).
    */
   generateHeader(options?: LanguageGeneratorOptions): string {
-    // Reset step counter at the start of each render pass.
+    // Reset captured actions and step counter — start of a fresh render pass.
+    this._capturedActions = [];
     this._stepCounter = 0;
     this._currentBrowserName = mapBrowserName(options?.browserName);
 
@@ -165,6 +178,9 @@ export class SeleniumLibraryLanguageGenerator {
 
     if (!emitted) return '';
 
+    // Capture for Replay — same contract as RF emitter.
+    this._capturedActions.push(actionInContext);
+
     // Increment step counter — only for actions that produce output.
     this._stepCounter += 1;
 
@@ -188,8 +204,13 @@ export class SeleniumLibraryLanguageGenerator {
         .slice(0, 3);
     }
 
-    const xlibComment = INDENT + formatXlibComment({ step: this._stepCounter, alts: xlibAlts });
-    fmt.rawLine(xlibComment);
+    // Emit the xlib comment ONLY when there are alternatives worth recording.
+    // Bare `# xlib:step=N` lines were noise — patch command falls back to
+    // fuzzy content match when markers are absent.
+    if (xlibAlts && xlibAlts.length > 0) {
+      const xlibComment = INDENT + formatXlibComment({ step: this._stepCounter, alts: xlibAlts });
+      fmt.rawLine(xlibComment);
+    }
 
     for (const line of signalLinesAfter(action.signals, INDENT)) {
       fmt.rawLine(line);

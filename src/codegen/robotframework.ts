@@ -267,8 +267,14 @@ export class RobotFrameworkLanguageGenerator {
         .slice(0, 3);
     }
 
-    const xlibComment = INDENT + formatXlibComment({ step: this._stepCounter, alts: xlibAlts });
-    fmt.rawLine(xlibComment);
+    // Emit the xlib comment ONLY when there are alternatives worth recording.
+    // Bare `# xlib:step=N` lines were too noisy in practice — the patch command
+    // falls back to fuzzy content match when markers are absent (Task #9's
+    // step-parser handles both).
+    if (xlibAlts && xlibAlts.length > 0) {
+      const xlibComment = INDENT + formatXlibComment({ step: this._stepCounter, alts: xlibAlts });
+      fmt.rawLine(xlibComment);
+    }
 
     // Signal lines AFTER the action (e.g. navigation comment, popup note)
     for (const line of signalLinesAfter(action.signals, INDENT)) {
