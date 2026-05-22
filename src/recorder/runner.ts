@@ -46,6 +46,7 @@ import {
   wasBundlePatchSuccessful,
   wasInspectorPatchSuccessful,
   wasOutputFollowsTargetSuccessful,
+  wasSelectorCandidatesPatchSuccessful,
   setInspectorInjection,
 } from './bundle-patcher.js';
 import { createReplayController, type ReplayController } from '../replay/replay-engine.js';
@@ -111,6 +112,7 @@ function printBundlePatchWarning(): void {
       `\n     • languageSet():           ${tick(wasBundlePatchSuccessful())}` +
       `\n     • Inspector injection:     ${tick(wasInspectorPatchSuccessful())}` +
       `\n     • Output follows Target:   ${tick(wasOutputFollowsTargetSuccessful())}` +
+      `\n     • Selector candidates:     ${tick(wasSelectorCandidatesPatchSuccessful())}` +
       `\n` +
       `\n   Falling back to JSONL bridge mode — recording still works, but the` +
       `\n   Inspector window shows JSONL instead of Robot Framework, and the` +

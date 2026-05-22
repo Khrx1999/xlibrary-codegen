@@ -66,6 +66,17 @@ declare global {
   /** Source-rewrite flag for the output-file Target-follow patch (patch #3). */
 
   var __xlibrary_outputFollowsTargetSucceeded: boolean | undefined;
+  /**
+   * Source-rewrite flag: set when the selectorCandidates patch (patch #4)
+   * successfully rewrote the `_ariaSnapshot` call inside `source5`
+   * (pollingRecorderSource.ts) during coreBundle.js compile.
+   *
+   * Note: a successful rewrite only means the regex matched. The runtime
+   * side-effect (alternatives being attached to actions) is confirmed when
+   * `wasSelectorCandidatesPatchSuccessful()` returns true AND an action
+   * with `alternatives` is actually received.
+   */
+  var __xlibrary_selectorCandidatesPatchSucceeded: boolean | undefined;
 }
 
 /**
@@ -138,6 +149,21 @@ export function wasOutputFollowsTargetSuccessful(): boolean {
  */
 export function wasInspectorInjected(): boolean {
   return globalThis.__xlibrary_inspectorInjected === true;
+}
+
+/**
+ * Whether the selectorCandidates patch (patch #4) successfully rewrote the
+ * `_ariaSnapshot` internals in `source5` (pollingRecorderSource) during
+ * coreBundle.js compile. When true, `generateSelector()` is called with
+ * `multiple: true` inside the recorder and the resulting `selectors[]` array
+ * is ferried to `ActionInContext.action.alternatives` via a one-shot wrapper
+ * on `recordAction`.
+ *
+ * Becomes `true` synchronously during the `Module._compile` hook — safe to
+ * check before `_enableRecorder` is called.
+ */
+export function wasSelectorCandidatesPatchSuccessful(): boolean {
+  return globalThis.__xlibrary_selectorCandidatesPatchSucceeded === true;
 }
 
 // ---------------------------------------------------------------------------
@@ -325,6 +351,119 @@ function patchOutputFollowsTarget(source: string): { patched: string; ok: boolea
 }
 
 // ---------------------------------------------------------------------------
+// Fourth patch — ferry generateSelector candidates to ActionInContext
+// ---------------------------------------------------------------------------
+
+/**
+ * Rewrite two statements inside the `_ariaSnapshot` method of
+ * `JsonRecordActionTool` (bundled inside `source5` / pollingRecorderSource.ts
+ * in coreBundle.js) so that:
+ *
+ *   1. `generateSelector()` is called with `multiple: true`, causing Playwright
+ *      to generate a ranked list of selector candidates rather than just the
+ *      best one.
+ *
+ *   2. Immediately before the `return { ariaSnapshot, selector, ref }` line,
+ *      a one-shot wrapper is installed on `this._recorder.recordAction`.  The
+ *      wrapper captures the `selectors[]` array and attaches it as
+ *      `alternatives` on the very next `recordAction` call (which is always
+ *      the call triggered by the event handler that called `_ariaSnapshot`),
+ *      then removes itself.
+ *
+ * Why `source5` is the right target
+ * ──────────────────────────────────
+ * `source5` (pollingRecorderSource.ts) is the injected recorder script that
+ * runs INSIDE the browser page.  `_ariaSnapshot` lives there and is the only
+ * place where a per-action `generateSelector()` result can be intercepted
+ * before it crosses the `__pw_recorderRecordAction` IPC bridge and arrives
+ * at the server-side `_createActionInContext`.
+ *
+ * Since `source5` is stored as a JavaScript string literal with escaped `\n`
+ * sequences in coreBundle.js, our regex must target the EXACT sub-strings
+ * (no real newlines) and the replacement must also use `\\n` for literal
+ * newlines inside that string.  Both target sub-strings are unique across
+ * the entire bundle.
+ *
+ * Target #1 (verified against playwright-core@1.49–1.60):
+ *
+ *   generateSelector(element, { testIdAttributeName: this._recorder.state.testIdAttributeName }) : void 0;
+ *
+ * Target #2 (unique `_ariaSnapshot` return line):
+ *
+ *   return { ariaSnapshot, selector: elementInfo == null ? void 0 : elementInfo.selector, ref };
+ *
+ * Idempotency: the `multiple: true` string acts as the idempotency marker.
+ */
+function patchSelectorCandidates(source: string): { patched: string; ok: boolean } {
+  // Idempotency check: if either injection is already present, skip.
+  if (
+    source.includes('multiple: true') ||
+    source.includes('__xlibrary_selectorCandidatesPatchSucceeded')
+  ) {
+    return { patched: source, ok: true };
+  }
+
+  // ── Target #1: add `multiple: true` to the generateSelector call ──────────
+  // This sub-string appears exactly once (in `JsonRecordActionTool._ariaSnapshot`).
+  const RE_MULTIPLE =
+    /generateSelector\(element, \{ testIdAttributeName: this\._recorder\.state\.testIdAttributeName \}\) : void 0;/;
+  if (!RE_MULTIPLE.test(source)) {
+    dlog('bundle-patcher: selectorCandidates patch #1 (multiple:true) pattern not found');
+    return { patched: source, ok: false };
+  }
+
+  // ── Target #2: the unique `_ariaSnapshot` return line ────────────────────
+  // This sub-string appears exactly once in the bundle.
+  const RE_RETURN =
+    /return \{ ariaSnapshot, selector: elementInfo == null \? void 0 : elementInfo\.selector, ref \};/;
+  if (!RE_RETURN.test(source)) {
+    dlog('bundle-patcher: selectorCandidates patch #2 (return line) pattern not found');
+    return { patched: source, ok: false };
+  }
+
+  // Apply patch #1: add `multiple: true`
+  let patched = source.replace(
+    RE_MULTIPLE,
+    'generateSelector(element, { testIdAttributeName: this._recorder.state.testIdAttributeName, multiple: true }) : void 0;',
+  );
+
+  // Apply patch #2: inject a one-shot recordAction wrapper before the return.
+  //
+  // The injected snippet:
+  //   • Reads `elementInfo.selectors` (populated when `multiple: true`).
+  //   • Installs a one-shot wrapper on `this._recorder.recordAction` that
+  //     spreads `alternatives: selectors` onto the very next action object and
+  //     then restores the original `recordAction`.
+  //   • Sets `globalThis.__xlibrary_selectorCandidatesPatchSucceeded = true`
+  //     inside the wrapper so we know the runtime path was actually taken.
+  //   • Wrapped in try/catch so any failure falls back to vanilla behaviour.
+  //
+  // Note: arrow function syntax is safe here — source5 is eval'd in V8 (Chrome
+  // 110+) which supports ES2022. `Object.assign` is used instead of spread to
+  // stay compatible with slightly older V8 versions in edge-case Playwright builds.
+  const WRAPPER_SNIPPET =
+    'try{' +
+    'if(elementInfo&&elementInfo.selectors&&elementInfo.selectors.length>1){' +
+    'const __xl_sels=elementInfo.selectors;' +
+    'const __xl_rec=this._recorder;' +
+    'const __xl_orig=__xl_rec.recordAction.bind(__xl_rec);' +
+    '__xl_rec.recordAction=(action)=>{' +
+    '__xl_rec.recordAction=__xl_orig;' +
+    'globalThis.__xlibrary_selectorCandidatesPatchSucceeded=true;' +
+    'return __xl_orig(Object.assign({},action,{alternatives:__xl_sels}));' +
+    '};' +
+    '}' +
+    '}catch(_){}';
+
+  patched = patched.replace(
+    RE_RETURN,
+    `${WRAPPER_SNIPPET} return { ariaSnapshot, selector: elementInfo == null ? void 0 : elementInfo.selector, ref };`,
+  );
+
+  return { patched, ok: true };
+}
+
+// ---------------------------------------------------------------------------
 // Module._compile hook installer
 // ---------------------------------------------------------------------------
 
@@ -380,11 +519,24 @@ export function installBundlePatch(): boolean {
         content = targetPatch.patched;
       }
 
+      // Patch 4: ferry generateSelector candidates to ActionInContext.
+      // Modifies `JsonRecordActionTool._ariaSnapshot` inside source5
+      // (pollingRecorderSource.ts) so `selectors[]` flows through the IPC
+      // bridge as `action.alternatives` on each recorded action.
+      const candidatesPatch = patchSelectorCandidates(content);
+      if (candidatesPatch.ok) {
+        globalThis.__xlibrary_selectorCandidatesPatchSucceeded = true;
+        content = candidatesPatch.patched;
+      } else {
+        globalThis.__xlibrary_selectorCandidatesPatchSucceeded = false;
+      }
+
       dlog(
-        'bundle-patcher: language=%s, inspector=%s, target-follow=%s (Δ=%d bytes) for %s',
+        'bundle-patcher: language=%s, inspector=%s, target-follow=%s, candidates=%s (Δ=%d bytes) for %s',
         langPatch.ok ? 'patched' : 'miss',
         inspectorPatch.ok ? 'patched' : 'miss',
         targetPatch.ok ? 'patched' : 'miss',
+        candidatesPatch.ok ? 'patched' : 'miss',
         content.length - originalLength,
         filename,
       );
