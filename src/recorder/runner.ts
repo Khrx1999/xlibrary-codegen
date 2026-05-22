@@ -135,6 +135,53 @@ function printBundlePatchWarning(): void {
   );
 }
 
+/**
+ * Warn (but do NOT exit) when the user requests `-l ts` or `-l python` while
+ * bundle patch #1 is failing.
+ *
+ * Why warn instead of hard-fail (per Task #4 investigation):
+ *   Playwright's `playwright-test` and `python-pytest` language generators are
+ *   shipped natively inside coreBundle.js and registered without any patching.
+ *   A bundle-patch failure means xlibrary's Self-Healing alt-selector hints
+ *   (Task #7) won't be injected — but the recording itself works fine.
+ *   Hard-failing here would block a perfectly functional recording session.
+ *
+ *   The warning alerts the user that the future Self-Healing feature won't be
+ *   active, and invites them to update or report the version mismatch.
+ */
+function printTsPythonPatchWarning(lang: 'ts' | 'python'): void {
+  let pwVersion = 'unknown';
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { createRequire } = require('node:module') as typeof import('node:module');
+    const requireFromHere = createRequire(import.meta.url);
+    pwVersion = (requireFromHere('playwright-core/package.json') as { version: string }).version;
+  } catch {
+    // Fall through — version unknown but warning still fires.
+  }
+
+  const bar = '━'.repeat(72);
+  const nativeId = lang === 'ts' ? 'playwright-test' : 'python-pytest';
+  console.warn(
+    `\n${bar}` +
+      `\n⚠  xlibrary bundle patch unavailable (playwright-core@${pwVersion})` +
+      `\n` +
+      `\n   You requested -l ${lang} (Playwright's native emitter).  Recording` +
+      `\n   will work correctly — Playwright's built-in ${nativeId}` +
+      `\n   generator does not require xlibrary's bundle patch.` +
+      `\n` +
+      `\n   What you DO lose when the patch misses:` +
+      `\n     • Self-Healing alt-selector hints (Task #7)` +
+      `\n     • Inspector "Open Live Preview" button` +
+      `\n` +
+      `\n   To restore the patch, update xlibrary or downgrade playwright-core` +
+      `\n   to a supported version.  Report at:` +
+      `\n     https://github.com/Khrx1999/xlibrary/issues/new` +
+      `\n   …with playwright-core@${pwVersion} in the title.` +
+      `\n${bar}\n`,
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Internal types — mirror the _enableRecorder channel schema
 // (not exported from playwright-core public types, accessed via unknown cast)
@@ -281,7 +328,14 @@ export async function runRecorder(options: RobotCodegenOptions): Promise<void> {
       '\n       • Browser Library  (primary — output file written in this format)',
       '\n       • SeleniumLibrary  (selectable via Inspector "Target:" dropdown)',
     );
+  } else if (lang === 'ts' || lang === 'python') {
+    // Per Task #4 investigation: Playwright's native playwright-test /
+    // python-pytest generators don't require xlibrary's bundle patch.
+    // Recording works fine; only Self-Healing alt hints + Inspector button
+    // are lost. Warn (don't hard-fail) so the user knows what they're missing.
+    printTsPythonPatchWarning(lang);
   } else {
+    // lang ∈ {robot, selenium} + bundle-patch failed → JSONL bridge fallback
     printBundlePatchWarning();
   }
 
