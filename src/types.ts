@@ -16,6 +16,13 @@
 /**
  * The emitter target language selected by the user.
  *
+ * | Value      | Playwright language ID     | Output                            |
+ * |------------|----------------------------|-----------------------------------|
+ * | `robot`    | `robotframework` / `jsonl` | Robot Framework + Browser Library |
+ * | `selenium` | `selenium`                 | Robot Framework + SeleniumLibrary |
+ * | `ts`       | `playwright-test`          | TypeScript Playwright Test file   |
+ * | `python`   | `python-pytest`            | Python pytest-playwright file     |
+ *
  * Note on naming: the interface is kept as `RobotCodegenOptions` (not renamed
  * to `CodegenOptions`) because v0.1 consumers import it by that name and
  * renaming would be a breaking change. The `lang` field added here supports
@@ -34,7 +41,8 @@ export interface RobotCodegenOptions {
   /**
    * Resolved emitter target.  Populated by the CLI from `-l/--lang` or
    * inferred from the `-o` file extension.  Defaults to `'robot'`.
-   * Task #3 (runner.ts) will read this to select the active LanguageGenerator.
+   * runner.ts reads this to select the active LanguageGenerator
+   * (see `langToPlaywrightId()`).
    */
   lang?: LangTarget;
   /** Suppress the live keyword preview printed to stdout during recording. */
