@@ -1,0 +1,26 @@
+{
+  "actions": [
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "click",
+        "selector": "internal:role=button[name=\"Sign In\" s]",
+        "button": "left",
+        "modifiers": 0,
+        "clickCount": 1,
+        "signals": [],
+        "alternatives": [
+          "internal:role=button[name=\"Sign In\" s]",
+          "css=#login-btn",
+          "[data-testid=\"submit\"]",
+          "internal:text=\"Sign In\""
+        ]
+      },
+      "startTime": 0
+    }
+  ]
+}

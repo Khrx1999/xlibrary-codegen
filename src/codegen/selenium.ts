@@ -26,6 +26,8 @@ import { escapeRobotValue } from './locator-translator.js';
 import { signalLinesBefore, signalLinesAfter } from './signal-handler.js';
 import { formatKeyWithModifiers, toSeleniumModifier } from './keyboard-modifiers.js';
 import { RobotFormatter, INDENT } from './robot-formatter.js';
+import { formatXlibComment } from './xlib-comment.js';
+import { rankCandidates } from './locator-grader.js';
 import type { Action, ActionInContext } from '../types.js';
 
 export type { ActionInContext };
@@ -113,6 +115,12 @@ export class SeleniumLibraryLanguageGenerator {
   private _browserOpened = false;
   private _currentBrowserName = 'chrome';
 
+  // ── Step counter for xlib:step=N markers ─────────────────────────────────
+  //
+  // Monotonic 1-indexed counter — incremented only for actions that produce
+  // output. Reset to 0 in generateHeader() at the start of each render pass.
+  private _stepCounter = 0;
+
   // ───────────────────────────────────────────────────────────────────────────
   // generateHeader
   // ───────────────────────────────────────────────────────────────────────────
@@ -124,6 +132,8 @@ export class SeleniumLibraryLanguageGenerator {
    * (handled in generateAction).
    */
   generateHeader(options?: LanguageGeneratorOptions): string {
+    // Reset step counter at the start of each render pass.
+    this._stepCounter = 0;
     this._currentBrowserName = mapBrowserName(options?.browserName);
 
     return new RobotFormatter()
@@ -154,6 +164,30 @@ export class SeleniumLibraryLanguageGenerator {
     }
 
     if (!emitted) return '';
+
+    // Increment step counter — only for actions that produce output.
+    this._stepCounter += 1;
+
+    // Build the xlib self-healing comment (graceful degrade: alts only when
+    // alternatives[] is populated by the JSONL-bridge patch).
+    const alternatives =
+      'alternatives' in action && Array.isArray(action.alternatives)
+        ? action.alternatives
+        : undefined;
+
+    let xlibAlts: string[] | undefined;
+    if (alternatives && alternatives.length > 1) {
+      // Exclude the primary action.selector from the alts (it's already in
+      // the keyword call — alts are distinct fallbacks).
+      const ranked = rankCandidates(alternatives.map((s: string) => ({ selector: s })));
+      xlibAlts = ranked
+        .map((r) => r.selector)
+        .filter((s) => s !== action.selector)
+        .slice(0, 3);
+    }
+
+    const xlibComment = INDENT + formatXlibComment({ step: this._stepCounter, alts: xlibAlts });
+    fmt.rawLine(xlibComment);
 
     for (const line of signalLinesAfter(action.signals, INDENT)) {
       fmt.rawLine(line);

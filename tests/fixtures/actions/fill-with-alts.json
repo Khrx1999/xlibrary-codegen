@@ -1,0 +1,23 @@
+{
+  "actions": [
+    {
+      "frame": {
+        "pageGuid": "page-guid-1",
+        "pageAlias": "page",
+        "framePath": []
+      },
+      "action": {
+        "name": "fill",
+        "selector": "internal:label=\"Email\"",
+        "text": "user@example.com",
+        "signals": [],
+        "alternatives": [
+          "internal:label=\"Email\"",
+          "css=#email-input",
+          "[data-testid=\"email\"]"
+        ]
+      },
+      "startTime": 0
+    }
+  ]
+}

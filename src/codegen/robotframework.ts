@@ -20,6 +20,8 @@ import { translateSelector, escapeRobotValue } from './locator-translator.js';
 import { signalLinesBefore, signalLinesAfter } from './signal-handler.js';
 import { decodeModifiers, formatKeyWithModifiers } from './keyboard-modifiers.js';
 import { RobotFormatter, INDENT } from './robot-formatter.js';
+import { formatXlibComment } from './xlib-comment.js';
+import { rankCandidates } from './locator-grader.js';
 import type { Action, ActionInContext } from '../types.js';
 
 // Re-export ActionInContext for callers that already import it from this module.
@@ -92,6 +94,14 @@ export class RobotFrameworkLanguageGenerator {
   // the replay engine to walk through the recording in a fresh browser.
   private _capturedActions: ActionInContext[] = [];
 
+  // ── Step counter for xlib:step=N markers ─────────────────────────────────
+  //
+  // Monotonic 1-indexed counter — increments on every call to generateAction()
+  // that produces output (skipped actions like openPage(about:blank) do NOT
+  // consume a step number).  Reset to 0 in generateHeader() so each render
+  // pass starts fresh from step 1.
+  private _stepCounter = 0;
+
   constructor(testName = 'Recorded Flow', libraryLine = 'Library    Browser') {
     this._testName = testName;
     this._libraryLine = libraryLine;
@@ -155,8 +165,10 @@ export class RobotFrameworkLanguageGenerator {
    * the defaults produce `chromium / headless=${False} / args=[…] / viewport=None`.
    */
   generateHeader(options?: LanguageGeneratorOptions): string {
-    // Reset action capture — this header call marks the start of a render pass.
+    // Reset action capture and step counter — this header call marks the
+    // start of a render pass.
     this._capturedActions = [];
+    this._stepCounter = 0;
 
     const browser = options?.browserName ?? 'chromium';
     const headless = options?.launchOptions?.headless === true ? '${True}' : '${False}';
@@ -227,6 +239,33 @@ export class RobotFrameworkLanguageGenerator {
     }
 
     if (!emitted) return '';
+
+    // Increment step counter — only for actions that produce output.
+    this._stepCounter += 1;
+
+    // Build the xlib self-healing comment.
+    // alternatives[] is populated by the JSONL-bridge patch (Task #1).
+    // In direct mode or when only 1 candidate exists, graceful degrade:
+    // emit only xlib:step=N (no alts clause).
+    const alternatives =
+      'alternatives' in action && Array.isArray(action.alternatives)
+        ? action.alternatives
+        : undefined;
+
+    let xlibAlts: string[] | undefined;
+    if (alternatives && alternatives.length > 1) {
+      // Rank all candidates by quality grade, then exclude whichever one is
+      // the primary `action.selector` (already used in the keyword call).
+      // The remaining top-3 are emitted as fallback alternatives.
+      const ranked = rankCandidates(alternatives.map((s: string) => ({ selector: s })));
+      xlibAlts = ranked
+        .map((r) => r.selector)
+        .filter((s) => s !== action.selector)
+        .slice(0, 3);
+    }
+
+    const xlibComment = INDENT + formatXlibComment({ step: this._stepCounter, alts: xlibAlts });
+    fmt.rawLine(xlibComment);
 
     // Signal lines AFTER the action (e.g. navigation comment, popup note)
     for (const line of signalLinesAfter(action.signals, INDENT)) {

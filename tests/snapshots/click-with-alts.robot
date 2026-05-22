@@ -5,6 +5,6 @@ Library    Browser
 Recorded Flow
     New Browser    chromium    headless=${False}    args=["--start-maximized"]
     New Context    viewport=None
-    Press Keys    css=#search-input    Enter
-    # xlib:step=1
+    Click    role=button[name="Sign In"]
+    # xlib:step=1;alts=["[data-testid=\"submit\"]","internal:text=\"Sign In\"","css=#login-btn"]
     Close Browser

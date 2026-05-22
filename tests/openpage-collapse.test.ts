@@ -31,20 +31,20 @@ describe('openPage+navigate collapse', () => {
     const nav = g.generateAction(ctx('navigate', { url: 'https://playwright.dev/' }));
 
     expect(blank).toBe('');
-    expect(nav).toBe('    New Page    https://playwright.dev/');
+    expect(nav).toContain('    New Page    https://playwright.dev/');
   });
 
   it('collapses openPage(chrome://newtab) + navigate → single New Page', () => {
     const g = new RobotFrameworkLanguageGenerator();
     g.generateAction(ctx('openPage', { url: 'chrome://newtab/' }));
     const nav = g.generateAction(ctx('navigate', { url: 'https://example.com/' }));
-    expect(nav).toBe('    New Page    https://example.com/');
+    expect(nav).toContain('    New Page    https://example.com/');
   });
 
   it('plain navigate (no prior openPage) stays Go To', () => {
     const g = new RobotFrameworkLanguageGenerator();
     const nav = g.generateAction(ctx('navigate', { url: 'https://example.com/dashboard' }));
-    expect(nav).toBe('    Go To    https://example.com/dashboard');
+    expect(nav).toContain('    Go To    https://example.com/dashboard');
   });
 
   it('navigate following a click on a blank page does NOT collapse', () => {
@@ -55,8 +55,8 @@ describe('openPage+navigate collapse', () => {
     );
     const nav = g.generateAction(ctx('navigate', { url: 'https://example.com/' }));
 
-    expect(click).toBe('    Click    css=#btn');
-    expect(nav).toBe('    Go To    https://example.com/'); // genuine Go To, not collapsed
+    expect(click).toContain('    Click    css=#btn');
+    expect(nav).toContain('    Go To    https://example.com/'); // genuine Go To, not collapsed
   });
 
   it('openPage with real URL emits New Page directly, no pending state', () => {
@@ -64,8 +64,8 @@ describe('openPage+navigate collapse', () => {
     const open = g.generateAction(ctx('openPage', { url: 'https://direct.example/' }));
     const nav = g.generateAction(ctx('navigate', { url: 'https://later.example/' }));
 
-    expect(open).toBe('    New Page    https://direct.example/');
-    expect(nav).toBe('    Go To    https://later.example/');
+    expect(open).toContain('    New Page    https://direct.example/');
+    expect(nav).toContain('    Go To    https://later.example/');
   });
 
   it('second openPage(blank) after collapse re-arms the pending state', () => {
@@ -75,7 +75,7 @@ describe('openPage+navigate collapse', () => {
     g.generateAction(ctx('openPage', { url: 'about:blank' })); // new tab opens blank
     const nav2 = g.generateAction(ctx('navigate', { url: 'https://second.example/' }));
 
-    expect(nav2).toBe('    New Page    https://second.example/');
+    expect(nav2).toContain('    New Page    https://second.example/');
   });
 });
 

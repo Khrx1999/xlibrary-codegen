@@ -6,4 +6,5 @@ Recorded Flow
     New Browser    chromium    headless=${False}    args=["--start-maximized"]
     New Context    viewport=None
     # TODO: assertSnapshot not supported — ariaSnapshot: - heading "Welcome" [level=1]\n- button "Submit"
+    # xlib:step=1
     Close Browser

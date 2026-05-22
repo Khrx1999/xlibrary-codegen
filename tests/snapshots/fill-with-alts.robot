@@ -5,6 +5,6 @@ Library    Browser
 Recorded Flow
     New Browser    chromium    headless=${False}    args=["--start-maximized"]
     New Context    viewport=None
-    Press Keys    css=#search-input    Enter
-    # xlib:step=1
+    Fill Text    label=Email    user@example.com
+    # xlib:step=1;alts=["[data-testid=\"email\"]","css=#email-input"]
     Close Browser

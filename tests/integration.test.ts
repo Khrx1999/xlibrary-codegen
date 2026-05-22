@@ -55,6 +55,9 @@ const KNOWN_SNAPSHOT_NAMES = new Set([
   'assertChecked-unchecked',
   'assertSnapshot',
   'full-flow',
+  // v0.2 #7 Self-Healing — selector alternatives in xlib:alts comment
+  'click-with-alts',
+  'fill-with-alts',
 ]);
 
 // ---------------------------------------------------------------------------
@@ -68,7 +71,9 @@ describe('Golden snapshots — robot --dryrun validation', () => {
     return;
   }
 
-  const snapshotFiles = readdirSync(SNAPSHOTS_DIR).filter((f) => f.endsWith('.robot'));
+  const snapshotFiles = readdirSync(SNAPSHOTS_DIR).filter(
+    (f) => f.endsWith('.robot') && !f.endsWith('.selenium.robot'),
+  );
 
   for (const file of snapshotFiles) {
     const filePath = resolve(SNAPSHOTS_DIR, file);
@@ -95,7 +100,9 @@ describe('Golden snapshots — robot --dryrun validation', () => {
 // ---------------------------------------------------------------------------
 
 describe('Golden snapshot file structure', () => {
-  const snapshotFiles = readdirSync(SNAPSHOTS_DIR).filter((f) => f.endsWith('.robot'));
+  const snapshotFiles = readdirSync(SNAPSHOTS_DIR).filter(
+    (f) => f.endsWith('.robot') && !f.endsWith('.selenium.robot'),
+  );
 
   it('snapshots directory is non-empty', () => {
     expect(snapshotFiles.length).toBeGreaterThan(0);
