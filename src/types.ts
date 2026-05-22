@@ -13,6 +13,17 @@
 
 // ─── CLI / project options ────────────────────────────────────────────────────
 
+/**
+ * The emitter target language selected by the user.
+ *
+ * Note on naming: the interface is kept as `RobotCodegenOptions` (not renamed
+ * to `CodegenOptions`) because v0.1 consumers import it by that name and
+ * renaming would be a breaking change. The `lang` field added here supports
+ * the non-Robot targets; the name of the type is not a reliable indicator
+ * of the active target.
+ */
+export type LangTarget = 'robot' | 'selenium' | 'ts' | 'python';
+
 export interface RobotCodegenOptions {
   url?: string;
   output?: string;
@@ -20,6 +31,12 @@ export interface RobotCodegenOptions {
   headed?: boolean;
   testName?: string;
   libraryImportLine?: string;
+  /**
+   * Resolved emitter target.  Populated by the CLI from `-l/--lang` or
+   * inferred from the `-o` file extension.  Defaults to `'robot'`.
+   * Task #3 (runner.ts) will read this to select the active LanguageGenerator.
+   */
+  lang?: LangTarget;
   /** Suppress the live keyword preview printed to stdout during recording. */
   quiet?: boolean;
   /**

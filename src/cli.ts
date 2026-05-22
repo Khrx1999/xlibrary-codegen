@@ -27,6 +27,7 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { runRecorder } from './recorder/runner.js';
 import type { RobotCodegenOptions } from './types.js';
+import { resolveLang } from './codegen/lang-inference.js';
 
 const requireFromHere = createRequire(import.meta.url);
 
@@ -97,7 +98,14 @@ program
 program
   .command('codegen [url]')
   .description('Open a browser, record your interactions, and write the corresponding .robot file.')
-  .option('-o, --output <file>', 'Output .robot file path', 'recorded.robot')
+  .option('-o, --output <file>', 'Output file path (default: recorded.robot)')
+  .option(
+    '-l, --lang <target>',
+    'Emitter target: robot | selenium | ts | python. ' +
+      'When omitted, inferred from the -o file extension ' +
+      '(.robot→robot, .selenium.robot→selenium, .spec.ts/.ts→ts, .py→python). ' +
+      'Default: robot.',
+  )
   .option('-b, --browser <name>', 'Browser to use: chromium | firefox | webkit', 'chromium')
   .option('--test-name <name>', 'Name of the generated test case', 'Recorded Flow')
   .option('--quiet', 'Suppress the live keyword preview printed during recording')
@@ -114,12 +122,18 @@ program
     false,
   )
   .action(async (url: string | undefined, opts: Record<string, unknown>) => {
+    const rawOutput = opts['output'] as string | undefined;
+    const outputPath = rawOutput ?? 'recorded.robot';
+
+    const lang = resolveLang(opts['lang'] as string | undefined, rawOutput);
+
     const options: RobotCodegenOptions = {
       url,
-      output: opts['output'] as string | undefined,
+      output: outputPath,
       browser: (opts['browser'] as RobotCodegenOptions['browser']) ?? 'chromium',
       headed: true, // recording is always headed
       testName: opts['testName'] as string | undefined,
+      lang,
       quiet: opts['quiet'] === true,
       open: opts['open'] === true,
       viewer: opts['viewer'] !== false, // true unless --no-viewer was passed
