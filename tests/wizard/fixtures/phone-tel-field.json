@@ -1,0 +1,15 @@
+{
+  "description": "FillAction on [type=tel] — produces VALID_PHONE",
+  "actions": [
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "fill",
+        "selector": "input[type=tel]",
+        "text": "+66812345678",
+        "signals": []
+      },
+      "startTime": 1000
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "description": "Two different email values in [type=email] fields — VALID_EMAIL + VALID_EMAIL_2",
+  "actions": [
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "fill",
+        "selector": "input[type=email]",
+        "text": "alice@example.com",
+        "signals": []
+      },
+      "startTime": 1000
+    },
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "fill",
+        "selector": "input[type=email]",
+        "text": "bob@example.com",
+        "signals": []
+      },
+      "startTime": 2000
+    }
+  ]
+}

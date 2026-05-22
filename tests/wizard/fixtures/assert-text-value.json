@@ -1,0 +1,26 @@
+{
+  "description": "AssertTextAction and AssertValueAction with extractable values",
+  "actions": [
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "assertText",
+        "selector": "#profile-email",
+        "text": "qa@example.com",
+        "substring": false,
+        "signals": []
+      },
+      "startTime": 5000
+    },
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "assertValue",
+        "selector": "input[type=email]",
+        "value": "qa@example.com",
+        "signals": []
+      },
+      "startTime": 6000
+    }
+  ]
+}

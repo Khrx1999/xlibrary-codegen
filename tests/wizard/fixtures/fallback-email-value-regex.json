@@ -1,0 +1,15 @@
+{
+  "description": "FillAction on a generic selector — email shape in value triggers EMAIL fallback",
+  "actions": [
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "fill",
+        "selector": "#search-box",
+        "text": "someone@domain.org",
+        "signals": []
+      },
+      "startTime": 1000
+    }
+  ]
+}

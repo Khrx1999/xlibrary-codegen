@@ -1,0 +1,23 @@
+{
+  "description": "Same URL in NavigateAction + OpenPageAction — both reuse BASE_URL, occurrences=2",
+  "actions": [
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "navigate",
+        "url": "https://example.com/login",
+        "signals": []
+      },
+      "startTime": 500
+    },
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "openPage",
+        "url": "https://example.com/login",
+        "signals": []
+      },
+      "startTime": 1000
+    }
+  ]
+}

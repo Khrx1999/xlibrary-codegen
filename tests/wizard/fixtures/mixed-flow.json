@@ -1,0 +1,46 @@
+{
+  "description": "Full login flow: navigate + fill email + fill password — exercises field-context + URL detection together",
+  "actions": [
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "navigate",
+        "url": "https://app.example.com/login",
+        "signals": []
+      },
+      "startTime": 500
+    },
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "fill",
+        "selector": "input[type=email]",
+        "text": "qa@example.com",
+        "signals": []
+      },
+      "startTime": 1000
+    },
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "fill",
+        "selector": "input[type=password]",
+        "text": "S3cr3t!",
+        "signals": []
+      },
+      "startTime": 2000
+    },
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "click",
+        "selector": "button[type=submit]",
+        "button": "left",
+        "modifiers": 0,
+        "clickCount": 1,
+        "signals": []
+      },
+      "startTime": 3000
+    }
+  ]
+}

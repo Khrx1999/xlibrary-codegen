@@ -1,0 +1,25 @@
+{
+  "description": "Same email value in two separate FillActions — should produce 1 var, occurrences=2",
+  "actions": [
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "fill",
+        "selector": "input[type=email]",
+        "text": "qa@example.com",
+        "signals": []
+      },
+      "startTime": 1000
+    },
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "fill",
+        "selector": "#confirm-email",
+        "text": "qa@example.com",
+        "signals": []
+      },
+      "startTime": 2000
+    }
+  ]
+}

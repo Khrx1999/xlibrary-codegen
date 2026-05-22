@@ -1,0 +1,25 @@
+{
+  "description": "autocomplete=username and autocomplete=current-password field context",
+  "actions": [
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "fill",
+        "selector": "input[autocomplete=username]",
+        "text": "john_doe",
+        "signals": []
+      },
+      "startTime": 1000
+    },
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "fill",
+        "selector": "input[autocomplete=current-password]",
+        "text": "OldP@ss99",
+        "signals": []
+      },
+      "startTime": 2000
+    }
+  ]
+}

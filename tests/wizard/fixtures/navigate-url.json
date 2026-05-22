@@ -1,0 +1,14 @@
+{
+  "description": "NavigateAction with URL — value-regex fallback produces BASE_URL",
+  "actions": [
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "navigate",
+        "url": "https://example.com/login",
+        "signals": []
+      },
+      "startTime": 500
+    }
+  ]
+}
