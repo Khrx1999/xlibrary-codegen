@@ -271,6 +271,7 @@ export async function runRecorder(options: RobotCodegenOptions): Promise<void> {
   const showViewer = options.viewer !== false; // default on; --no-viewer disables
   const autoOpenViewer = options.openViewer ?? false; // off — Inspector gets a button instead
   const url = options.url;
+  const doExtractData = options.extractData === true;
   // Default to 'robot' so existing callers that don't supply `lang` keep the same behaviour.
   const lang: LangTarget = options.lang ?? 'robot';
 
@@ -772,6 +773,27 @@ export async function runRecorder(options: RobotCodegenOptions): Promise<void> {
     if (openAfter && existsSync(outputPath)) {
       console.log(`📂  Opening in editor: ${outputPath}`);
       openInEditor(outputPath);
+    }
+
+    // ── Test Data Wizard post-record hook (Task #13 + #14) ──────────────────
+    // The orchestrator handles the interactive confirm prompt; quiet mode
+    // is respected (--quiet suppresses the diff preview and skips the prompt).
+    if (doExtractData && latestActions.length > 0) {
+      try {
+        // Dynamic import — avoids pulling the wizard into the hot path when
+        // --extract-data is not used.
+        const { runExtractionOnActions } = await import('../wizard/extract-orchestrator.js');
+        await runExtractionOnActions({
+          sourceFile: outputPath,
+          actions: latestActions,
+          yes: quiet, // --quiet implies non-interactive (skip confirm prompt)
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`\n  ⚠  --extract-data failed: ${msg}`);
+        console.error('     The output file was saved; extraction can be retried with:');
+        console.error(`     xlibrary extract ${outputPath}`);
+      }
     }
 
     // Step 4 — delete tempDir and close viewer server.

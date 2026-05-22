@@ -75,6 +75,12 @@ export interface RobotCodegenOptions {
    * - `string`: write to this explicit path
    */
   saveActions?: string | true;
+  /**
+   * After recording ends, run the Test Data Wizard:
+   * detect extractable variables, show a diff preview, and prompt to apply.
+   * With `quiet: true` the prompt is skipped and changes are auto-applied.
+   */
+  extractData?: boolean;
 }
 
 export interface RobotSection {

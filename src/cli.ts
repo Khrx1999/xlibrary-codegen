@@ -27,6 +27,7 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { runRecorder } from './recorder/runner.js';
 import { runEmit } from './cli-emit.js';
+import { runExtract } from './cli-extract.js';
 import type { RobotCodegenOptions } from './types.js';
 import { resolveLang } from './codegen/lang-inference.js';
 
@@ -127,6 +128,12 @@ program
     'Save the raw action stream as a JSONL artifact. ' +
       'If no file is given, writes to <output>.jsonl next to the output file.',
   )
+  .option(
+    '--extract-data',
+    'After recording ends, run the Test Data Wizard: detect extractable variables, ' +
+      'show a diff preview, and prompt to apply. Use --quiet to skip the prompt and auto-apply.',
+    false,
+  )
   .action(async (url: string | undefined, opts: Record<string, unknown>) => {
     const rawOutput = opts['output'] as string | undefined;
     const outputPath = rawOutput ?? 'recorded.robot';
@@ -155,6 +162,7 @@ program
       viewer: opts['viewer'] !== false, // true unless --no-viewer was passed
       openViewer: opts['openViewer'] === true,
       saveActions,
+      extractData: opts['extractData'] === true,
     };
 
     try {
@@ -326,6 +334,55 @@ program
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(`\nxlibrary emit error: ${message}`);
+      process.exit(1);
+    }
+  });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// extract — Test Data Wizard standalone subcommand
+//
+// Usage:
+//   xlibrary extract login.robot
+//   xlibrary extract login.robot -o login-extracted.robot
+//   xlibrary extract login.robot --yes
+//   xlibrary extract login.robot --actions login.robot.jsonl
+//
+// Language is inferred from the source file extension (.robot → robot, etc.).
+// A sidecar .jsonl is required (same path + .jsonl suffix, or --actions <path>).
+// ─────────────────────────────────────────────────────────────────────────────
+program
+  .command('extract <file>')
+  .description(
+    'Run the Test Data Wizard on an existing file — detect literal values, ' +
+      'show a diff preview, and extract them into variables. ' +
+      'Requires a sidecar .jsonl (from --save-actions) or --actions <jsonl-path>.',
+  )
+  .option(
+    '-o, --output <file>',
+    'Write to this path instead of editing the source file in-place (no .bak written for separate output)',
+  )
+  .option('--yes', 'Skip the confirmation prompt and apply immediately', false)
+  .option(
+    '-l, --lang <target>',
+    'Override language inference from file extension. ' +
+      'Must be one of: robot | selenium | ts | python.',
+  )
+  .option(
+    '--actions <jsonl-path>',
+    'Override sidecar .jsonl lookup. Default: <file>.jsonl next to the source file.',
+  )
+  .action(async (file: string, opts: Record<string, unknown>) => {
+    try {
+      await runExtract({
+        file,
+        output: opts['output'] as string | undefined,
+        yes: opts['yes'] === true,
+        lang: opts['lang'] as string | undefined,
+        actionsFile: opts['actions'] as string | undefined,
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`\nxlibrary extract error: ${message}`);
       process.exit(1);
     }
   });
