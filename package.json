@@ -65,10 +65,16 @@
   "keywords": [
     "robot-framework",
     "browser-library",
+    "selenium-library",
     "playwright",
+    "playwright-test",
+    "pytest-playwright",
     "codegen",
     "test-automation",
-    "recorder"
+    "recorder",
+    "self-healing",
+    "locator-grader",
+    "test-data-extraction"
   ],
   "dependencies": {
     "commander": "^12.1.0",

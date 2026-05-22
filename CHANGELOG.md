@@ -7,7 +7,49 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [Unreleased] — v0.2.0
+## [0.2.1] — 2026-05-22
+
+### Fixed
+
+- **Selenium Replay button** in the live viewer was inert because
+  `SeleniumLibraryLanguageGenerator` was missing `getCapturedActions()`.
+  Added the method (returns a defensive copy) and aligned action-capture
+  position with the RF emitter so both produce identical action lists for
+  the Replay engine.
+- **`# xlib:step=N` clutter** suppressed. Direct-mode recordings (the common
+  case) have no `alternatives[]` payload, so the bare step marker added no
+  value. The emitters now only write the comment when there are alternatives
+  to record (JSONL bridge mode). Output is clean by default.
+
+### Changed
+
+- **`--save-actions` + `-l ts/python` now fails fast.** Playwright owns the
+  ts/python emitters, so xlibrary can't capture the action stream for
+  re-emission. The previous behavior silently wrote an empty `.jsonl`
+  (header only). Record with `-l robot` instead, then `xlibrary emit` later.
+- **Unified `LangTarget` type.** Removed duplicate `SourceLang` /
+  `SupportedLang` aliases from `src/patch/*`. Single canonical type from
+  `src/types.ts`.
+- **`xlibrary --version`** reads from `package.json` dynamically — no manual
+  sync required on version bumps.
+
+### Removed
+
+- `src/codegen/xlib-post-processor.ts` was written but never wired into the
+  runner. ts/python `# xlib:step` markers via post-processing are deferred
+  to v0.3.
+- 127 redundant integration tests (Task #16 forked from pre-wave-1 base and
+  duplicated coverage of helper modules already exercised by snapshot tests).
+  Final count: 1255 tests, all passing.
+
+### Improved
+
+- `viewer-server.ts` uses `WebSocket.OPEN` constant instead of magic
+  `readyState === 1` (three call sites).
+
+---
+
+## [0.2.0] — 2026-05-22
 
 > Design decisions: [ADR-0001 Multi-language emitter scope](docs/adr/0001-multi-language-emitter-scope.md),
 > [ADR-0002 xlib inline comment format](docs/adr/0002-xlib-inline-comment-format.md).

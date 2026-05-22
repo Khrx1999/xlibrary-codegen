@@ -15,7 +15,7 @@
 ## มีอะไรใหม่ใน v0.2
 
 - **รองรับหลายภาษา** — บันทึกครั้งเดียว แล้ว emit เป็น `robot`, `selenium`, `ts` หรือ `python` ผ่าน `-l`/`--lang` บันทึก action stream ดิบด้วย `--save-actions` แล้ว render ใหม่ภายหลังด้วย `xlibrary emit`
-- **Self-healing locators** — ทุก step ที่บันทึกมีคอมเมนต์ `# xlib:step=N;alts=[...]` พร้อม selector ทางเลือกสูงสุด 3 รายการที่ ranked และเกรดอักษร (A+ ถึง D) viewer แสดง grade chip สีต่างๆ ต่อ step
+- **Self-healing locators** — ตอนที่มี alternative selectors ระบบจะแนบคอมเมนต์ `# xlib:step=N;alts=[...]` พร้อม selector ทางเลือกสูงสุด 3 รายการที่ ranked และเกรดอักษร (A+ ถึง D) viewer แสดง grade chip สีต่างๆ ต่อ step (v0.2.1: ถ้าไม่มี alts ก็ไม่ใส่คอมเมนต์ — output ปกติจะสะอาด)
 - **Re-record step** — `xlibrary patch <file>` เล่น replay ไฟล์ถึง step เป้าหมาย ให้คุณ re-record ในเบราว์เซอร์ แล้วนำผลลัพธ์ splicing กลับในที่เดิม รองรับ replace, insert-after/before, delete และ move ทุกภาษา output
 - **Test Data Wizard** — `--extract-data` (หลังบันทึก) หรือ `xlibrary extract <file>` (standalone) ตรวจจับค่า literal (email, password, URL) แสดง diff preview แล้ว extract เป็นการประกาศ variable ตามภาษา
 
@@ -202,7 +202,7 @@ npx xlibrary extract login.robot -o login-extracted.robot
 
 ### `xlibrary patch <file> [options]`
 
-Re-record หนึ่งหรือหลาย step ในไฟล์ที่สร้างไว้แล้ว ต้องมี `xlib:step=N` markers (มีในทุกไฟล์ที่สร้างโดย xlibrary >= 0.2.0)
+Re-record หนึ่งหรือหลาย step ในไฟล์ที่สร้างไว้แล้ว ถ้าไฟล์มี `xlib:step=N` markers จะค้นด้วย step number ตรงๆ ถ้าไม่มีก็ fallback เป็น fuzzy match บน keyword line (case-insensitive substring) พร้อมตาราง disambiguation ตอนเจอหลายตัว
 
 | Flag                   | คำอธิบาย                                                    |
 | ---------------------- | ----------------------------------------------------------- |
