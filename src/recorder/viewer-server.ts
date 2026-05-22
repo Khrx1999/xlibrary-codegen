@@ -21,6 +21,7 @@ import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
+import { buildViewerPayload } from './viewer-renderer.js';
 
 // ─── HTML ─────────────────────────────────────────────────────────────────────
 
@@ -43,7 +44,7 @@ function loadViewerHtml(): string {
 <title>Robot Codegen — Live Preview</title>
 <style>body{background:#1a1a2e;color:#a8b2d8;font-family:monospace;padding:24px}</style>
 </head><body>
-<h1>🤖 Robot Codegen — Live Preview</h1>
+<h1>Robot Codegen — Live Preview</h1>
 <pre id="code">Connecting…</pre>
 <script>
   var ws=new WebSocket('ws://'+location.host);
@@ -56,6 +57,9 @@ function loadViewerHtml(): string {
 }
 
 // ─── Public API ────────────────────────────────────────────────────────────────
+
+// Re-export BadgeInfo so callers can import from viewer-server directly.
+export type { BadgeInfo } from './viewer-renderer.js';
 
 /**
  * Commands the viewer page can send to the server.
@@ -169,7 +173,13 @@ export async function startViewerServer(preferredPort = 0): Promise<ViewerServer
 
   // ── broadcast helper ────────────────────────────────────────────────────────
   function broadcast(robotContent: string): void {
-    const message = JSON.stringify({ type: 'update', content: robotContent });
+    // Parse xlib markers and build badge metadata alongside the raw text.
+    const payload = buildViewerPayload(robotContent);
+    const message = JSON.stringify({
+      type: 'update',
+      content: payload.text,
+      badges: payload.badges,
+    });
     for (const client of wss.clients) {
       // readyState 1 === OPEN (matches ws.WebSocket.OPEN constant)
       if (client.readyState === 1) {

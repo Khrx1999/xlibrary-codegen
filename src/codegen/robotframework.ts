@@ -255,12 +255,15 @@ export class RobotFrameworkLanguageGenerator {
     let xlibAlts: string[] | undefined;
     if (alternatives && alternatives.length > 1) {
       // Rank all candidates by quality grade, then exclude whichever one is
-      // the primary `action.selector` (already used in the keyword call).
+      // the primary selector (already used in the keyword call).
       // The remaining top-3 are emitted as fallback alternatives.
+      // `selector` only exists on selector-bearing Action variants — guard
+      // the access with a type-narrowing read.
+      const primarySelector = 'selector' in action ? action.selector : undefined;
       const ranked = rankCandidates(alternatives.map((s: string) => ({ selector: s })));
       xlibAlts = ranked
         .map((r) => r.selector)
-        .filter((s) => s !== action.selector)
+        .filter((s) => s !== primarySelector)
         .slice(0, 3);
     }
 

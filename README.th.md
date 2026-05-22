@@ -1,8 +1,9 @@
-> 🌐 อ่านในภาษา: [English](README.md) | **ภาษาไทย**
+> อ่านในภาษา: [English](README.md) | **ภาษาไทย**
 
 # xlibrary
 
-บันทึกการใช้งานเบราว์เซอร์แล้วสร้างไฟล์ `.robot` สำหรับ [Robot Framework](https://robotframework.org/) + [Browser Library](https://github.com/MarketSquare/robotframework-browser) — ขับเคลื่อนด้วย [Playwright](https://playwright.dev/)
+บันทึกการใช้งานเบราว์เซอร์แล้วสร้างไฟล์ทดสอบสำหรับ [Robot Framework](https://robotframework.org/) + [Browser Library](https://github.com/MarketSquare/robotframework-browser),
+[SeleniumLibrary](https://robotframework.org/SeleniumLibrary/), [Playwright Test (TypeScript)](https://playwright.dev/) หรือ [pytest-playwright (Python)](https://playwright.dev/python/) — ขับเคลื่อนด้วย [Playwright](https://playwright.dev/)
 
 [![npm version](https://img.shields.io/npm/v/xlibrary)](https://www.npmjs.com/package/xlibrary)
 [![node](https://img.shields.io/node/v/xlibrary)](https://nodejs.org/)
@@ -11,39 +12,49 @@
 
 ---
 
+## มีอะไรใหม่ใน v0.2
+
+- **รองรับหลายภาษา** — บันทึกครั้งเดียว แล้ว emit เป็น `robot`, `selenium`, `ts` หรือ `python` ผ่าน `-l`/`--lang` บันทึก action stream ดิบด้วย `--save-actions` แล้ว render ใหม่ภายหลังด้วย `xlibrary emit`
+- **Self-healing locators** — ทุก step ที่บันทึกมีคอมเมนต์ `# xlib:step=N;alts=[...]` พร้อม selector ทางเลือกสูงสุด 3 รายการที่ ranked และเกรดอักษร (A+ ถึง D) viewer แสดง grade chip สีต่างๆ ต่อ step
+- **Re-record step** — `xlibrary patch <file>` เล่น replay ไฟล์ถึง step เป้าหมาย ให้คุณ re-record ในเบราว์เซอร์ แล้วนำผลลัพธ์ splicing กลับในที่เดิม รองรับ replace, insert-after/before, delete และ move ทุกภาษา output
+- **Test Data Wizard** — `--extract-data` (หลังบันทึก) หรือ `xlibrary extract <file>` (standalone) ตรวจจับค่า literal (email, password, URL) แสดง diff preview แล้ว extract เป็นการประกาศ variable ตามภาษา
+
+---
+
 ## ทำอะไรได้บ้าง
 
 - เปิดหน้าต่างเบราว์เซอร์จริงพร้อม visual recorder ของ Playwright
 - บันทึกทุกการคลิก กรอกข้อมูล navigate และ assertion ขณะที่คุณใช้งานหน้าเว็บ
-- เขียนไฟล์ `.robot` ที่พร้อมรันทันทีโดยใช้ keyword ของ Browser Library
+- เขียนไฟล์ที่พร้อมรันทันทีในรูปแบบ output ที่คุณเลือก
+- แนบ alternative selectors และ quality grades ให้กับทุก step
 - หยุดการบันทึกเมื่อคุณปิดหน้าต่างเบราว์เซอร์ หรือกด `Ctrl+C`
 
 ---
 
 ## ความต้องการของระบบ
 
-- Node.js **≥ 20**
+- Node.js **>= 20**
 
 ---
 
 ## เริ่มใช้งานเร็ว
 
 ```bash
-# 1️⃣  ติดตั้งครั้งแรก — ดาวน์โหลด binary ของ Chromium (~150 MB, จะถูก cache ไว้)
-#     ถ้าคุณติดตั้ง Playwright browsers ไว้แล้ว สามารถข้ามขั้นตอนนี้ได้
+# 1. ติดตั้งครั้งแรก — ดาวน์โหลด binary ของ Chromium (~150 MB, จะถูก cache ไว้)
+#    ถ้าคุณติดตั้ง Playwright browsers ไว้แล้ว สามารถข้ามขั้นตอนนี้ได้
 npx xlibrary install
 
-# 2️⃣  บันทึก session โดยเริ่มจาก URL
+# 2. บันทึก session โดยเริ่มจาก URL
 npx xlibrary codegen https://example.com -o recorded.robot
 
-# หรือ: เปิดเบราว์เซอร์เปล่าแล้วพิมพ์ URL เอง
-npx xlibrary codegen -o recorded.robot
+# หรือ: emit รูปแบบอื่นโดยตรง
+npx xlibrary codegen https://example.com -l ts -o test.spec.ts --save-actions
 ```
 
-> 💡 ถ้าข้ามขั้นตอนที่ 1 แล้วรัน `codegen` ทันที xlibrary จะตรวจพบว่า binary
+> ถ้าข้ามขั้นตอนที่ 1 แล้วรัน `codegen` ทันที xlibrary จะตรวจพบว่า binary
 > ยังไม่มีและจะแสดงคำสั่ง `install` ที่ต้องใช้ให้คุณ
 
-เบราว์เซอร์จะเปิดขึ้น ใช้งานหน้าเว็บตามที่ต้องการ จากนั้นปิดหน้าต่าง (หรือกด `Ctrl+C`) ไฟล์ `.robot` ของคุณจะถูกบันทึกพร้อมใช้:
+เบราว์เซอร์จะเปิดขึ้น ใช้งานหน้าเว็บตามที่ต้องการ จากนั้นปิดหน้าต่าง (หรือกด `Ctrl+C`) ไฟล์ output ของคุณจะถูกบันทึกพร้อมใช้:
 
 ```robot
 *** Settings ***
@@ -54,15 +65,13 @@ Recorded Flow
     New Browser    chromium    headless=${False}    args=["--start-maximized"]
     New Context    viewport=None
     New Page    https://example.com
-    Click    role=button[name="Get started"]
-    Fill Text    role=textbox[name="Search"]    robot framework
+    Click    role=button[name="Get started"]    # xlib:step=1;alts=["css=.btn-primary","text=Get started"]
+    Fill Text    role=textbox[name="Search"]    robot framework    # xlib:step=2
     Close Browser
 ```
 
-> ค่าเริ่มต้น `args=["--start-maximized"]` และ `viewport=None` ของ Chromium
-> ทำให้เบราว์เซอร์ที่บันทึกครอบคลุมหน้าจอจริง เพื่อให้ selector สะท้อน viewport
-> ที่ใช้งานจริง ส่วน Firefox และ WebKit จะไม่ได้รับ `args=["--start-maximized"]`
-> เนื่องจากเป็น flag ของ Chromium อย่างเดียว
+> marker `# xlib:step=N;alts=[...]` จะถูกเพิ่มให้กับทุก step โดยอัตโนมัติ
+> มันเป็น power ของ self-healing และ `xlibrary patch` สามารถลบออกด้วย `sed '/# xlib:/d'` ถ้าต้องการ output ที่สะอาด
 
 ---
 
@@ -99,38 +108,214 @@ npx xlibrary install --with-deps           # ติดตั้ง OS-level deps
 
 ### `xlibrary codegen [url] [options]`
 
-เปิดเบราว์เซอร์ บันทึกการใช้งาน เขียนไฟล์ `.robot`
+เปิดเบราว์เซอร์ บันทึกการใช้งาน เขียนไฟล์ output
 
-| Flag                   | ค่าเริ่มต้น        | คำอธิบาย                                                                  |
-| ---------------------- | ---------------- | ----------------------------------------------------------------------- |
-| `[url]`                | _(ไม่มี)_         | URL ที่จะเปิด ถ้าไม่ระบุจะเปิดเบราว์เซอร์เปล่าให้พิมพ์ URL เอง                       |
-| `-o, --output <file>`  | `recorded.robot` | path ของไฟล์ `.robot` ที่จะบันทึก                                          |
-| `-b, --browser <name>` | `chromium`       | เบราว์เซอร์: `chromium`, `firefox`, หรือ `webkit`                          |
-| `--test-name <name>`   | `Recorded Flow`  | ชื่อของ test case ที่จะสร้าง                                                |
-| `--quiet`              | _(ปิด)_          | ปิดการแสดง keyword preview แบบ live ระหว่างบันทึก                          |
-| `--open`               | _(ปิด)_          | เมื่อบันทึกเสร็จ เปิดไฟล์ `.robot` ใน editor ของคุณอัตโนมัติ                    |
-| `--no-viewer`          | _(viewer เปิด)_  | ปิดหน้าต่าง live-viewer (เปิดเป็นค่าเริ่มต้น)                                 |
+| Flag                    | ค่าเริ่มต้น      | คำอธิบาย                                                                |
+| ----------------------- | ---------------- | ----------------------------------------------------------------------- |
+| `[url]`                 | _(ไม่มี)_        | URL ที่จะเปิด ถ้าไม่ระบุจะเปิดเบราว์เซอร์เปล่าให้พิมพ์ URL เอง          |
+| `-o, --output <file>`   | `recorded.robot` | path ของไฟล์ output extension จะ infer ภาษาเมื่อไม่มี `-l`              |
+| `-l, --lang <target>`   | _(inferred)_     | ภาษา output: `robot` \| `selenium` \| `ts` \| `python`                  |
+| `-b, --browser <name>`  | `chromium`       | เบราว์เซอร์: `chromium`, `firefox` หรือ `webkit`                        |
+| `--test-name <name>`    | `Recorded Flow`  | ชื่อของ test case ที่จะสร้าง                                            |
+| `--save-actions [file]` | _(ปิด)_          | บันทึก action stream ดิบเป็น `.jsonl` artifact สำหรับใช้ `emit` ภายหลัง |
+| `--extract-data`        | _(ปิด)_          | หลังจากบันทึกเสร็จ รัน Test Data Wizard                                 |
+| `--quiet`               | _(ปิด)_          | ปิดการแสดง keyword preview แบบ live ระหว่างบันทึก                       |
+| `--open`                | _(ปิด)_          | เมื่อบันทึกเสร็จ เปิดไฟล์ output ใน editor ของคุณอัตโนมัติ              |
+| `--no-viewer`           | _(viewer เปิด)_  | ปิดหน้าต่าง live-viewer (เปิดเป็นค่าเริ่มต้น)                           |
+| `--open-viewer`         | _(ปิด)_          | Auto-open หน้าต่าง viewer ในเบราว์เซอร์ของคุณเมื่อเริ่ม                 |
+
+**การ infer ภาษาจาก extension ของ `-o`:**
+
+| Extension         | Target     |
+| ----------------- | ---------- |
+| `.robot`          | `robot`    |
+| `.selenium.robot` | `selenium` |
+| `.spec.ts`, `.ts` | `ts`       |
+| `.py`             | `python`   |
+| _(อื่นๆ)_         | `robot`    |
 
 **ตัวอย่าง:**
 
 ```bash
-# บันทึกพร้อมตั้งชื่อ test case
+# บันทึก Robot Framework output พร้อมตั้งชื่อ test case
 npx xlibrary codegen https://example.com/login -o login.robot --test-name "Login Flow"
+
+# บันทึก Playwright TypeScript output และบันทึก action artifact
+npx xlibrary codegen https://example.com -l ts -o tests/login.spec.ts --save-actions
+
+# บันทึก SeleniumLibrary output (infer จาก extension)
+npx xlibrary codegen https://example.com -o login.selenium.robot
+
+# บันทึกแล้ว extract variables ทันที
+npx xlibrary codegen https://example.com -o login.robot --save-actions --extract-data
 
 # ใช้ Firefox
 npx xlibrary codegen https://example.com -b firefox -o firefox-test.robot
+```
 
-# เปิดเบราว์เซอร์เปล่า พิมพ์ URL เอง และบันทึกไปยัง path ที่ต้องการ
-npx xlibrary codegen -o tests/my-flow.robot --test-name "My Flow"
+### `xlibrary emit <actions.jsonl> [options]`
+
+Render artifact action ที่บันทึกไว้ก่อนหน้าเป็นภาษาเป้าหมาย — ไม่ต้อง re-record
+
+รองรับใน v0.2: `robot`, `selenium` (`ts` และ `python` ต้องใช้ `xlibrary codegen -l ts/python` โดยตรง)
+
+| Flag                  | Required | คำอธิบาย                                 |
+| --------------------- | -------- | ---------------------------------------- |
+| `-l, --lang <target>` | ใช่      | Output target: `robot` \| `selenium`     |
+| `-o, --output <file>` | ใช่      | path ของไฟล์ปลายทาง                      |
+| `--test-name <name>`  | ไม่      | Override ชื่อ test case จาก JSONL header |
+
+```bash
+# ขั้นแรก บันทึกและบันทึก artifact
+npx xlibrary codegen https://example.com/login -o login.robot --save-actions
+
+# Re-emit เป็น SeleniumLibrary (ไม่ต้องเปิดเบราว์เซอร์)
+npx xlibrary emit recorded.robot.jsonl -l selenium -o login.selenium.robot
+
+# Re-emit เป็น Robot Framework พร้อมเปลี่ยนชื่อ test
+npx xlibrary emit recorded.robot.jsonl -l robot -o login-v2.robot --test-name "Login v2"
+```
+
+### `xlibrary extract <file> [options]`
+
+รัน Test Data Wizard บนไฟล์ที่มีอยู่แล้ว ตรวจจับค่า literal (email, password, URL) แสดง diff preview และ extract เป็น variables
+
+ต้องการ sidecar `.jsonl` จาก `--save-actions` หรือระบุด้วย `--actions <path>`
+
+| Flag                     | ค่าเริ่มต้น  | คำอธิบาย                                                     |
+| ------------------------ | ------------ | ------------------------------------------------------------ |
+| `-o, --output <file>`    | _(in-place)_ | เขียนไปยังไฟล์แยก แทนที่จะแก้ไข in-place                     |
+| `--yes`                  | _(ปิด)_      | ข้าม confirmation prompt แล้ว apply ทันที                    |
+| `-l, --lang <target>`    | _(inferred)_ | Override การ infer ภาษาจาก extension ของไฟล์                 |
+| `--actions <jsonl-path>` | _(auto)_     | Override path ของ sidecar `.jsonl` (default: `<file>.jsonl`) |
+
+```bash
+# ดูว่าจะ extract อะไร (interactive prompt)
+npx xlibrary extract login.robot
+
+# Apply โดยไม่ prompt (สำหรับ CI)
+npx xlibrary extract login.robot --yes
+
+# เขียนไปยังไฟล์ใหม่แทนที่จะแก้ไข in-place
+npx xlibrary extract login.robot -o login-extracted.robot
+```
+
+### `xlibrary patch <file> [options]`
+
+Re-record หนึ่งหรือหลาย step ในไฟล์ที่สร้างไว้แล้ว ต้องมี `xlib:step=N` markers (มีในทุกไฟล์ที่สร้างโดย xlibrary >= 0.2.0)
+
+| Flag                   | คำอธิบาย                                                    |
+| ---------------------- | ----------------------------------------------------------- |
+| `--at <id>`            | แทนที่ step `id` คือ step number หรือ fuzzy keyword content |
+| `--insert-after <id>`  | บันทึก step ใหม่เพื่อ insert หลัง step `id`                 |
+| `--insert-before <id>` | บันทึก step ใหม่เพื่อ insert ก่อน step `id`                 |
+| `--delete <id>`        | ลบ step หรือ range (เช่น `5` หรือ `3-7`)                    |
+| `--move <spec>`        | จัดเรียง step ใหม่ — spec คือ `"<from> to <to>"`            |
+| `--range <range>`      | แทนที่ range ของ steps — ใช้ร่วมกับ `--at`                  |
+| `--non-interactive`    | Fail-fast แทนที่จะหยุดรอเมื่อ replay ล้มเหลว                |
+| `--no-backup`          | ข้ามการสร้างไฟล์ backup `.bak`                              |
+
+```bash
+# แทนที่ step 5 โดย re-record ในเบราว์เซอร์
+npx xlibrary patch login.robot --at 5
+
+# แทนที่โดยใช้ fuzzy keyword content
+npx xlibrary patch login.robot --at "Click Sign in"
+
+# ลบ step 6 ถึง 8
+npx xlibrary patch login.robot --delete 6-8
+
+# Insert step ใหม่หลัง step 3
+npx xlibrary patch login.robot --insert-after 3
+
+# ย้าย step 2 ไปที่ตำแหน่ง 5
+npx xlibrary patch login.robot --move "2 to 5"
 ```
 
 ดู [`docs/USAGE.md`](docs/USAGE.md) สำหรับ CLI reference เต็มและ workflow ทั้งหมด
 
 ---
 
+## รูปแบบ output ที่รองรับ
+
+### Robot Framework + Browser Library (default)
+
+```robot
+*** Settings ***
+Library    Browser
+
+*** Test Cases ***
+Login Flow
+    New Browser    chromium    headless=${False}    args=["--start-maximized"]
+    New Context    viewport=None
+    New Page    https://example.com/login
+    Fill Text    role=textbox[name="Email"]    ${VALID_EMAIL}    # xlib:step=2;alts=["label=Email","css=#email"]
+    Click    role=button[name="Sign in"]    # xlib:step=3
+    Close Browser
+```
+
+### SeleniumLibrary
+
+```robot
+*** Settings ***
+Library    SeleniumLibrary
+
+*** Test Cases ***
+Login Flow
+    Open Browser    https://example.com/login    Chrome
+    Input Text    name:email    ${VALID_EMAIL}    # xlib:step=2
+    Click Button    name:signin    # xlib:step=3
+    Close Browser
+```
+
+### Playwright Test (TypeScript)
+
+```ts
+import { test, expect } from '@playwright/test';
+
+test('Login Flow', async ({ page }) => {
+  await page.goto('https://example.com/login');
+  await page.getByRole('textbox', { name: 'Email' }).fill(VALID_EMAIL); // xlib:step=2;alts=["label=Email","css=#email"]
+  await page.getByRole('button', { name: 'Sign in' }).click(); // xlib:step=3
+});
+```
+
+### pytest-playwright (Python)
+
+```python
+def test_login_flow(page):
+    page.goto("https://example.com/login")
+    page.get_by_role("textbox", name="Email").fill(VALID_EMAIL)  # xlib:step=2
+    page.get_by_role("button", name="Sign in").click()  # xlib:step=3
+```
+
+---
+
+## Self-healing locators
+
+ทุก step ที่บันทึกมีคอมเมนต์ `# xlib:step=N;alts=[...]` inline ลิสต์ `alts` มี alternative selectors ranked สูงสุด 3 รายการที่สามารถแทน primary ได้ถ้ามันพัง
+
+Selectors จะถูก grade ด้วย A+ ถึง D:
+
+| ประเภท selector          | Grade |
+| ------------------------ | ----- |
+| `data-testid` / test-id  | A+    |
+| `role` + accessible name | A     |
+| `label` text             | A     |
+| `placeholder` text       | B     |
+| visible `text` content   | B     |
+| CSS (id / class)         | C     |
+| XPath                    | D     |
+
+Grade จะถูก promote หนึ่ง tier เมื่อ selector match เพียง element เดียวบนหน้า
+
+live viewer (`--viewer` เปิดเป็นค่าเริ่มต้น) แสดง grade เป็น colored chip ต่อ step hover เพื่อดู alternative list
+
+---
+
 ## รูปแบบไฟล์ที่สร้าง
 
-ทุก session ที่บันทึกจะสร้างไฟล์ `.robot` หนึ่งไฟล์:
+ทุก session ที่บันทึกจะสร้างไฟล์หนึ่งไฟล์ สำหรับ Robot Framework:
 
 ```robot
 *** Settings ***
@@ -141,13 +326,11 @@ Library    Browser
     New Browser    chromium    headless=${False}    args=["--start-maximized"]
     New Context    viewport=None
     New Page    <url>
-    <...recorded steps...>
+    <...recorded steps with xlib:step markers...>
     Close Browser
 ```
 
 Selector ใช้ syntax แบบ semantic ของ Browser Library — `role=`, `label=`, `css=`, `xpath=` — ตามที่ Playwright recorder จับมาได้
-
-เมื่อ recorder ส่ง role selector มาพร้อม flag case-insensitive (substring) `i` — เช่น `internal:role=button[name="Sign in" i]` — generator จะคง prefix `internal:` ไว้เพื่อรักษา semantic แบบ substring ส่วน selector แบบ exact-match จะถูก emit เป็น `role=` form ปกติ
 
 ---
 
@@ -184,6 +367,10 @@ Selector ใช้ syntax แบบ semantic ของ Browser Library — `role
 - [Login flow](docs/examples/login.md)
 - [Form submission](docs/examples/form-submit.md)
 - [Navigation and assertions](docs/examples/navigation.md)
+- [บันทึกครั้งเดียว emit หลายภาษา](docs/examples/multi-language.md)
+- [Self-healing locators ในทางปฏิบัติ](docs/examples/self-healing.md)
+- [Patch workflow — re-record step](docs/examples/patch-workflow.md)
+- [Extract test data variables](docs/examples/extract-data.md)
 
 ---
 
@@ -195,7 +382,7 @@ Selector ใช้ syntax แบบ semantic ของ Browser Library — `role
 
 ## Programmatic API (experimental)
 
-> ⚠ CLI คือ surface ที่ stable ส่วน programmatic API ยังเป็น **experimental จนกว่า
+> CLI คือ surface ที่ stable ส่วน programmatic API ยังเป็น **experimental จนกว่า
 > จะถึง 1.0** — ถ้าใช้งานในระบบจริง ให้ pin version แบบ exact (`xlibrary@0.1.6`)
 
 ```ts
@@ -203,7 +390,7 @@ import { runRecorder } from 'xlibrary';
 import { RobotFrameworkLanguageGenerator } from 'xlibrary/codegen';
 import type { ActionInContext } from 'xlibrary/types';
 
-// บันทึกและเขียนไฟล์ .robot (เหมือนกับ CLI):
+// บันทึกและเขียนไฟล์ output (เหมือนกับ CLI):
 await runRecorder({
   url: 'https://example.com',
   output: 'recorded.robot',
@@ -224,12 +411,12 @@ const footer = gen.generateFooter();
 
 Sub-entries ที่มีให้ใช้:
 
-| Import path         | สิ่งที่ export ออกมา                                                                                                       |
+| Import path         | สิ่งที่ export ออกมา                                                                                                    |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `xlibrary`          | ระดับสูง: `runRecorder`, `createReplayController`, generator classes                                                       |
+| `xlibrary`          | ระดับสูง: `runRecorder`, `createReplayController`, generator classes                                                    |
 | `xlibrary/codegen`  | Generators + utilities: `RobotFrameworkLanguageGenerator`, `translateSelector`, `escapeRobotValue`, `ACTION_TO_KEYWORD` |
 | `xlibrary/recorder` | Recorder orchestrator: `runRecorder`                                                                                    |
-| `xlibrary/types`    | public types ทั้งหมด: `Action`, `ActionInContext`, `ActionName`, options ต่าง ๆ                                            |
+| `xlibrary/types`    | public types ทั้งหมด: `Action`, `ActionInContext`, `ActionName`, options ต่าง ๆ                                         |
 
 ---
 

@@ -267,6 +267,139 @@
     .token.comment  { color: var(--text-subtle) !important; font-style: italic; }
     .token.function { color: #1d4ed8 !important; }
 
+    /* ─── Grade badge overlay ────────────────────────────────────────────── */
+
+    /*
+     * The badge overlay sits on top of the code block. We use an absolutely-
+     * positioned container that mirrors the code block dimensions exactly, so
+     * badge chips can be positioned per-line without disrupting Prism's output.
+     */
+    #code-wrapper {
+      position: relative;
+      display: inline-block;  /* shrink-wrap to code width */
+      min-width: 100%;
+    }
+
+    #badge-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none; /* let clicks fall through to the code */
+    }
+
+    /* One row per code line — height must match code line-height (1.7 × 13px ≈ 22.1px).
+       We use em units derived from the code font-size so they scale together. */
+    .badge-row {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: calc(1.7em);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 8px;
+      pointer-events: none;
+    }
+
+    /* The chip itself */
+    .grade-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 26px;
+      height: 17px;
+      padding: 0 5px;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1;
+      cursor: default;
+      pointer-events: all;
+      position: relative;
+      /* Prevent text selection on hover */
+      user-select: none;
+      -webkit-user-select: none;
+      flex-shrink: 0;
+      transition: opacity .1s;
+    }
+    .grade-chip:hover { opacity: 0.85; }
+
+    /* Grade colours */
+    .grade-Ap { background: #065f46; color: #6ee7b7; border: 1px solid #047857; } /* A+ deep-green */
+    .grade-A  { background: #166534; color: #86efac; border: 1px solid #16a34a; } /* A green */
+    .grade-B  { background: #78350f; color: #fcd34d; border: 1px solid #d97706; } /* B yellow */
+    .grade-C  { background: #7c2d12; color: #fdba74; border: 1px solid #ea580c; } /* C orange */
+    .grade-D  { background: #7f1d1d; color: #fca5a5; border: 1px solid #dc2626; } /* D red */
+
+    /* Expand panel — shown on chip hover; displayed above/below the chip */
+    .grade-chip .expand-panel {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 4px);
+      z-index: 100;
+      background: var(--bg);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      padding: 8px 10px;
+      min-width: 260px;
+      max-width: 520px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text);
+      pointer-events: all;
+      white-space: nowrap;
+    }
+    /* Flip upward when close to bottom of viewport — handled via JS class */
+    .grade-chip.panel-above .expand-panel {
+      top: auto;
+      bottom: calc(100% + 4px);
+    }
+
+    .grade-chip:hover .expand-panel,
+    .grade-chip:focus .expand-panel {
+      display: block;
+    }
+
+    .expand-panel .panel-title {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+      font-family: var(--font-sans);
+    }
+
+    .expand-panel .alt-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 0;
+    }
+    .expand-panel .alt-rank {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-subtle);
+      min-width: 14px;
+    }
+    .expand-panel .alt-selector {
+      color: #1d4ed8;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 440px;
+    }
+    .expand-panel .alt-item.primary .alt-selector {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
     /* ─── Placeholder ────────────────────────────────────────────────────── */
     #placeholder {
       color: var(--text-muted);
@@ -364,7 +497,11 @@
       <strong>replay</strong> the recorded actions step-by-step before running them with
       <kbd>robot file.robot</kbd>.
     </div>
-    <pre class="language-python" style="display:none" id="pre"><code class="language-python" id="code"></code></pre>
+    <div id="code-wrapper" style="display:none">
+      <pre class="language-python" id="pre"><code class="language-python" id="code"></code></pre>
+      <!-- Badge overlay: badge-row divs are injected here by JS -->
+      <div id="badge-layer" aria-hidden="true"></div>
+    </div>
   </main>
 
   <!-- Error toast ────────────────────────────────────────────────────── -->
@@ -386,58 +523,182 @@
   ></script>
 
   <script>
-    const connEl        = document.getElementById('conn');
-    const statusEl      = document.getElementById('status');
-    const actionCountEl = document.getElementById('action-count');
-    const placeholderEl = document.getElementById('placeholder');
-    const preEl         = document.getElementById('pre');
-    const codeEl        = document.getElementById('code');
+    var connEl        = document.getElementById('conn');
+    var statusEl      = document.getElementById('status');
+    var actionCountEl = document.getElementById('action-count');
+    var placeholderEl = document.getElementById('placeholder');
+    var wrapperEl     = document.getElementById('code-wrapper');
+    var codeEl        = document.getElementById('code');
+    var badgeLayerEl  = document.getElementById('badge-layer');
 
-    const btnReplay = document.getElementById('btn-replay');
-    const btnPause  = document.getElementById('btn-pause');
-    const btnResume = document.getElementById('btn-resume');
-    const btnStep   = document.getElementById('btn-step');
-    const btnStop   = document.getElementById('btn-stop');
-    const badgeEl   = document.getElementById('replay-badge');
-    const progressEl = document.getElementById('replay-progress');
-    const toastEl   = document.getElementById('error-toast');
-    const errorText = document.getElementById('error-text');
+    var btnReplay = document.getElementById('btn-replay');
+    var btnPause  = document.getElementById('btn-pause');
+    var btnResume = document.getElementById('btn-resume');
+    var btnStep   = document.getElementById('btn-step');
+    var btnStop   = document.getElementById('btn-stop');
+    var badgeEl   = document.getElementById('replay-badge');
+    var progressEl = document.getElementById('replay-progress');
+    var toastEl   = document.getElementById('error-toast');
+    var errorText = document.getElementById('error-text');
 
-    let ws;
-    let reconnectDelay = 1000;  // ms; doubles on each failure, capped at 15 s
-    let lastContent = '';
-    let totalActions = 0;
+    var ws;
+    var reconnectDelay = 1000;  // ms; doubles on each failure, capped at 15 s
+    var lastContent = '';
+    var totalActions = 0;
 
     // Count keyword-call lines (4-space indented, non-comment, non-lifecycle)
     function countActions(robotText) {
       return robotText
         .split('\n')
-        .filter(l => /^    \S/.test(l) &&
-                     !l.trim().startsWith('#') &&
-                     !['New Browser', 'New Context', 'Close Browser']
-                        .some(kw => l.trim().startsWith(kw)))
+        .filter(function(l) {
+          return /^    \S/.test(l) &&
+                 !l.trim().startsWith('#') &&
+                 !['New Browser', 'New Context', 'Close Browser']
+                    .some(function(kw) { return l.trim().startsWith(kw); });
+        })
         .length;
     }
 
-    function updateDisplay(content) {
+    // ── Grade badge rendering ────────────────────────────────────────────────
+
+    // Map a grade string to the CSS class suffix used on .grade-chip.
+    // 'A+' -> 'Ap' (no special chars in class names).
+    function gradeClass(grade) {
+      return grade === 'A+' ? 'Ap' : grade;
+    }
+
+    // Create an expand panel DOM node for the given alt selectors.
+    // All user-supplied strings are assigned via textContent (no innerHTML).
+    function createExpandPanel(topAlts) {
+      var panel = document.createElement('div');
+      panel.className = 'expand-panel';
+      panel.setAttribute('role', 'tooltip');
+
+      var title = document.createElement('div');
+      title.className = 'panel-title';
+      title.textContent = 'Alt selectors';
+      panel.appendChild(title);
+
+      for (var i = 0; i < topAlts.length; i++) {
+        var sel = topAlts[i];
+        var row = document.createElement('div');
+        row.className = 'alt-item' + (i === 0 ? ' primary' : '');
+
+        var rank = document.createElement('span');
+        rank.className = 'alt-rank';
+        rank.textContent = '#' + (i + 1);
+
+        var selSpan = document.createElement('span');
+        selSpan.className = 'alt-selector';
+        selSpan.title = sel;         // title is a plain string attr, no parsing
+        selSpan.textContent = sel;   // safe: no HTML interpretation
+
+        row.appendChild(rank);
+        row.appendChild(selSpan);
+        panel.appendChild(row);
+      }
+
+      return panel;
+    }
+
+    // Create a grade chip DOM node. No innerHTML used anywhere.
+    function createChip(grade, alts) {
+      var cls = gradeClass(grade);
+      var topAlts = alts.slice(0, 3);
+      var hasAlts = topAlts.length > 0;
+
+      var chip = document.createElement('span');
+      chip.className = 'grade-chip grade-' + cls;
+      chip.setAttribute('tabindex', '0');
+      chip.setAttribute(
+        'aria-label',
+        'Quality grade ' + grade + (hasAlts ? '; hover to see alt selectors' : '')
+      );
+      chip.textContent = grade; // always one of: A+, A, B, C, D
+
+      if (hasAlts) {
+        chip.appendChild(createExpandPanel(topAlts));
+      }
+
+      return chip;
+    }
+
+    // Compute the pixel top offset of line lineIdx (0-based) within the code block.
+    function lineTopPx(lineIdx) {
+      var style = window.getComputedStyle(codeEl);
+      var lineHeightVal = style.lineHeight;
+      var lh = lineHeightVal === 'normal'
+        ? parseFloat(style.fontSize) * 1.7
+        : parseFloat(lineHeightVal);
+      return lineIdx * lh;
+    }
+
+    // Render badge chips into the badge layer for the current set of badges.
+    // badges: Array<{lineIdx: number, grade: string, alts: string[]}>
+    function renderBadges(badges) {
+      // Remove all existing child nodes without using innerHTML.
+      while (badgeLayerEl.firstChild) {
+        badgeLayerEl.removeChild(badgeLayerEl.firstChild);
+      }
+
+      if (!badges || badges.length === 0) return;
+
+      var codeStyle = window.getComputedStyle(codeEl);
+      var viewportH = window.innerHeight;
+
+      for (var i = 0; i < badges.length; i++) {
+        var b = badges[i];
+        var topPx = lineTopPx(b.lineIdx);
+
+        var row = document.createElement('div');
+        row.className = 'badge-row';
+        row.style.top        = topPx + 'px';
+        row.style.fontFamily = codeStyle.fontFamily;
+        row.style.fontSize   = codeStyle.fontSize;
+
+        var chip = createChip(b.grade, b.alts || []);
+
+        // Flip expand panel upward if chip is near the bottom of the viewport.
+        (function(c, vh) {
+          c.addEventListener('mouseenter', function() {
+            var rect = c.getBoundingClientRect();
+            if (rect.bottom + 160 > vh) {
+              c.classList.add('panel-above');
+            } else {
+              c.classList.remove('panel-above');
+            }
+          });
+        })(chip, viewportH);
+
+        row.appendChild(chip);
+        badgeLayerEl.appendChild(row);
+      }
+    }
+
+    function updateDisplay(content, badges) {
       lastContent = content;
 
       totalActions = countActions(content);
-      actionCountEl.textContent = totalActions > 0 ? `${totalActions} action${totalActions !== 1 ? 's' : ''}` : '';
+      actionCountEl.textContent = totalActions > 0
+        ? totalActions + ' action' + (totalActions !== 1 ? 's' : '')
+        : '';
       btnReplay.disabled = totalActions === 0 || isActiveReplay();
 
       if (!content.trim()) return;
 
       placeholderEl.style.display = 'none';
-      preEl.style.display = '';
+      wrapperEl.style.display = '';
       codeEl.textContent = content;
       Prism.highlightElement(codeEl);
+
+      // Render badge chips after Prism updates the DOM.
+      renderBadges(badges || []);
 
       window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     }
 
     // ── Replay state ─────────────────────────────────────────────────────────
-    let replayStatus = 'idle';
+    var replayStatus = 'idle';
 
     function isActiveReplay() {
       return replayStatus === 'running' || replayStatus === 'paused';
@@ -449,7 +710,7 @@
       badgeEl.textContent = state.status;
 
       if (state.totalActions > 0) {
-        const idx = state.currentIndex >= 0 ? state.currentIndex + 1 : 0;
+        var idx = state.currentIndex >= 0 ? state.currentIndex + 1 : 0;
         progressEl.textContent =
           (state.currentName ? state.currentName + '  •  ' : '') +
           idx + ' / ' + state.totalActions;
@@ -480,46 +741,46 @@
 
     function sendCommand(type) {
       if (!ws || ws.readyState !== 1) return;
-      ws.send(JSON.stringify({ type }));
+      ws.send(JSON.stringify({ type: type }));
     }
 
-    btnReplay.addEventListener('click', () => sendCommand('replay-start'));
-    btnPause .addEventListener('click', () => sendCommand('replay-pause'));
-    btnResume.addEventListener('click', () => sendCommand('replay-resume'));
-    btnStep  .addEventListener('click', () => sendCommand('replay-step'));
-    btnStop  .addEventListener('click', () => sendCommand('replay-stop'));
+    btnReplay.addEventListener('click', function() { sendCommand('replay-start'); });
+    btnPause .addEventListener('click', function() { sendCommand('replay-pause'); });
+    btnResume.addEventListener('click', function() { sendCommand('replay-resume'); });
+    btnStep  .addEventListener('click', function() { sendCommand('replay-step'); });
+    btnStop  .addEventListener('click', function() { sendCommand('replay-stop'); });
 
     // ── WebSocket plumbing ───────────────────────────────────────────────────
     function connect() {
-      ws = new WebSocket(`ws://${location.host}`);
+      ws = new WebSocket('ws://' + location.host);
 
-      ws.addEventListener('open', () => {
+      ws.addEventListener('open', function() {
         reconnectDelay = 1000;
         connEl.classList.add('live');
         statusEl.textContent = 'live';
       });
 
-      ws.addEventListener('message', (event) => {
+      ws.addEventListener('message', function(event) {
         try {
-          const msg = JSON.parse(event.data);
+          var msg = JSON.parse(event.data);
           if (msg.type === 'update' && msg.content !== lastContent) {
-            updateDisplay(msg.content);
+            updateDisplay(msg.content, msg.badges);
           } else if (msg.type === 'replay-state' && msg.state) {
             applyReplayState(msg.state);
           }
-        } catch {
+        } catch (e) {
           // ignore malformed message
         }
       });
 
-      ws.addEventListener('close', () => {
+      ws.addEventListener('close', function() {
         connEl.classList.remove('live');
-        statusEl.textContent = `reconnecting in ${(reconnectDelay / 1000).toFixed(0)}s`;
+        statusEl.textContent = 'reconnecting in ' + Math.round(reconnectDelay / 1000) + 's';
         setTimeout(connect, reconnectDelay);
         reconnectDelay = Math.min(reconnectDelay * 2, 15000);
       });
 
-      ws.addEventListener('error', () => {
+      ws.addEventListener('error', function() {
         ws.close();
       });
     }

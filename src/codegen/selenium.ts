@@ -177,12 +177,14 @@ export class SeleniumLibraryLanguageGenerator {
 
     let xlibAlts: string[] | undefined;
     if (alternatives && alternatives.length > 1) {
-      // Exclude the primary action.selector from the alts (it's already in
-      // the keyword call — alts are distinct fallbacks).
+      // Exclude the primary selector from the alts (it's already in the
+      // keyword call — alts are distinct fallbacks). NavigateAction has no
+      // selector field, so type-narrow before reading.
+      const primarySelector = 'selector' in action ? action.selector : undefined;
       const ranked = rankCandidates(alternatives.map((s: string) => ({ selector: s })));
       xlibAlts = ranked
         .map((r) => r.selector)
-        .filter((s) => s !== action.selector)
+        .filter((s) => s !== primarySelector)
         .slice(0, 3);
     }
 

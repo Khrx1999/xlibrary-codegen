@@ -18,7 +18,12 @@ import {
   gradeCandidate,
   rankCandidates,
 } from '../src/codegen/locator-grader.js';
-import type { Grade, SelectorKind, GradeInput, GradeResult } from '../src/codegen/locator-grader.js';
+import type {
+  Grade,
+  SelectorKind,
+  GradeInput,
+  GradeResult,
+} from '../src/codegen/locator-grader.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // classifySelector
@@ -71,9 +76,9 @@ describe('classifySelector', () => {
     });
 
     it('classifies internal:role=heading[name="Playwright enables reliable" i]', () => {
-      expect(
-        classifySelector('internal:role=heading[name="Playwright enables reliable" i]'),
-      ).toBe('role-with-name');
+      expect(classifySelector('internal:role=heading[name="Playwright enables reliable" i]')).toBe(
+        'role-with-name',
+      );
     });
 
     // ── role WITHOUT name → unknown ──────────────────────────────────────────
@@ -437,10 +442,10 @@ describe('rankCandidates', () => {
 
   it('sorts best→worst (A+ before A before B before C before D)', () => {
     const inputs: GradeInput[] = [
-      { selector: '//button', matchCount: undefined },         // xpath → D
-      { selector: '.btn', matchCount: undefined },             // css   → C
-      { selector: 'text=Login', matchCount: undefined },       // text  → B
-      { selector: 'label=Email', matchCount: undefined },      // label → A
+      { selector: '//button', matchCount: undefined }, // xpath → D
+      { selector: '.btn', matchCount: undefined }, // css   → C
+      { selector: 'text=Login', matchCount: undefined }, // text  → B
+      { selector: 'label=Email', matchCount: undefined }, // label → A
       { selector: '[data-testid="btn"]', matchCount: undefined }, // testid → A+
     ];
     const results = rankCandidates(inputs);
@@ -460,10 +465,10 @@ describe('rankCandidates', () => {
 
   it('is STABLE across mixed grades — same-grade groups keep input order', () => {
     const inputs: GradeInput[] = [
-      { selector: 'label=A', matchCount: undefined },   // A
-      { selector: '#id1', matchCount: undefined },      // C
-      { selector: 'label=B', matchCount: undefined },   // A
-      { selector: '#id2', matchCount: undefined },      // C
+      { selector: 'label=A', matchCount: undefined }, // A
+      { selector: '#id1', matchCount: undefined }, // C
+      { selector: 'label=B', matchCount: undefined }, // A
+      { selector: '#id2', matchCount: undefined }, // C
     ];
     const results = rankCandidates(inputs);
     expect(results.map((r) => r.selector)).toEqual(['label=A', 'label=B', '#id1', '#id2']);
@@ -471,9 +476,9 @@ describe('rankCandidates', () => {
 
   it('applies bonus before ranking', () => {
     const inputs: GradeInput[] = [
-      { selector: '.css-only', matchCount: undefined },      // C
-      { selector: '//xpath', matchCount: 1 },                // D→C via bonus
-      { selector: 'text=Hello', matchCount: 1 },             // B→A via bonus
+      { selector: '.css-only', matchCount: undefined }, // C
+      { selector: '//xpath', matchCount: 1 }, // D→C via bonus
+      { selector: 'text=Hello', matchCount: 1 }, // B→A via bonus
     ];
     const results = rankCandidates(inputs);
     // text=Hello gets A, .css-only gets C, //xpath gets C
@@ -486,8 +491,8 @@ describe('rankCandidates', () => {
 
   it('places uniqueOnPage=true candidates ahead when that drives a grade difference', () => {
     const inputs: GradeInput[] = [
-      { selector: 'role=button[name="Ok"]', matchCount: 5 },  // role → A (no bonus)
-      { selector: 'label=Submit', matchCount: 1 },            // label → A+
+      { selector: 'role=button[name="Ok"]', matchCount: 5 }, // role → A (no bonus)
+      { selector: 'label=Submit', matchCount: 1 }, // label → A+
     ];
     const results = rankCandidates(inputs);
     expect(results[0].grade).toBe('A+');
@@ -531,14 +536,14 @@ describe('snapshot — full grade table (kind × matchCount)', () => {
    * Format: expectedGrade[kind][matchCountIndex] where index 0=undefined, 1=0, 2=1, 3=5
    */
   const expectedGrades: Record<SelectorKind, [Grade, Grade, Grade, Grade]> = {
-    testid:            ['A+', 'A+', 'A+', 'A+'], // A+ → bonus is no-op
-    'role-with-name':  ['A',  'A',  'A+', 'A' ], // A  → bonus → A+
-    label:             ['A',  'A',  'A+', 'A' ], // A  → bonus → A+
-    placeholder:       ['B',  'B',  'A',  'B' ], // B  → bonus → A
-    text:              ['B',  'B',  'A',  'B' ], // B  → bonus → A
-    css:               ['C',  'C',  'B',  'C' ], // C  → bonus → B
-    xpath:             ['D',  'D',  'C',  'D' ], // D  → bonus → C
-    unknown:           ['D',  'D',  'C',  'D' ], // D  → bonus → C
+    testid: ['A+', 'A+', 'A+', 'A+'], // A+ → bonus is no-op
+    'role-with-name': ['A', 'A', 'A+', 'A'], // A  → bonus → A+
+    label: ['A', 'A', 'A+', 'A'], // A  → bonus → A+
+    placeholder: ['B', 'B', 'A', 'B'], // B  → bonus → A
+    text: ['B', 'B', 'A', 'B'], // B  → bonus → A
+    css: ['C', 'C', 'B', 'C'], // C  → bonus → B
+    xpath: ['D', 'D', 'C', 'D'], // D  → bonus → C
+    unknown: ['D', 'D', 'C', 'D'], // D  → bonus → C
   };
 
   for (const kind of kinds) {
