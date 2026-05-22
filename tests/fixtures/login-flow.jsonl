@@ -1,0 +1,6 @@
+{"xlib":1,"recorded-at":"2026-05-22T19:23:45.123Z","browser":"chromium","test-name":"Login Flow"}
+{"name":"openPage","url":"https://example.com/login","signals":[],"pageGuid":"pg-1","pageAlias":"page","framePath":[]}
+{"name":"fill","selector":"css=#username","text":"admin","signals":[],"pageGuid":"pg-1","pageAlias":"page","framePath":[]}
+{"name":"fill","selector":"css=#password","text":"secret","signals":[],"pageGuid":"pg-1","pageAlias":"page","framePath":[]}
+{"name":"click","selector":"css=#login-btn","button":"left","modifiers":0,"clickCount":1,"signals":[],"pageGuid":"pg-1","pageAlias":"page","framePath":[]}
+{"name":"assertText","selector":"css=#welcome-banner","text":"Welcome admin","substring":false,"signals":[],"pageGuid":"pg-1","pageAlias":"page","framePath":[]}

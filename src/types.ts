@@ -66,6 +66,15 @@ export interface RobotCodegenOptions {
    * auto-open behaviour.
    */
   openViewer?: boolean;
+  /**
+   * Path to write the JSONL action-stream artifact after recording ends.
+   *
+   * - `undefined` / not passed: no sidecar written
+   * - `true` (bare `--save-actions` flag): write to `<output>.jsonl` next to
+   *   the output file
+   * - `string`: write to this explicit path
+   */
+  saveActions?: string | true;
 }
 
 export interface RobotSection {

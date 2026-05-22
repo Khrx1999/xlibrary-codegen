@@ -26,6 +26,7 @@ import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { runRecorder } from './recorder/runner.js';
+import { runEmit } from './cli-emit.js';
 import type { RobotCodegenOptions } from './types.js';
 import { resolveLang } from './codegen/lang-inference.js';
 
@@ -121,11 +122,26 @@ program
       'the Inspector shows an "📊 Open Live Preview" button so you can open it only when needed.',
     false,
   )
+  .option(
+    '--save-actions [file]',
+    'Save the raw action stream as a JSONL artifact. ' +
+      'If no file is given, writes to <output>.jsonl next to the output file.',
+  )
   .action(async (url: string | undefined, opts: Record<string, unknown>) => {
     const rawOutput = opts['output'] as string | undefined;
     const outputPath = rawOutput ?? 'recorded.robot';
 
     const lang = resolveLang(opts['lang'] as string | undefined, rawOutput);
+
+    // Resolve --save-actions: commander gives us `true` (bare flag), a string
+    // (explicit path), or `undefined` (flag not passed).
+    let saveActions: RobotCodegenOptions['saveActions'];
+    const rawSaveActions = opts['saveActions'];
+    if (rawSaveActions === true || rawSaveActions === '') {
+      saveActions = true; // bare --save-actions
+    } else if (typeof rawSaveActions === 'string' && rawSaveActions.length > 0) {
+      saveActions = rawSaveActions; // --save-actions path/to/file.jsonl
+    } // else undefined — not passed
 
     const options: RobotCodegenOptions = {
       url,
@@ -138,6 +154,7 @@ program
       open: opts['open'] === true,
       viewer: opts['viewer'] !== false, // true unless --no-viewer was passed
       openViewer: opts['openViewer'] === true,
+      saveActions,
     };
 
     try {
@@ -277,6 +294,40 @@ program
       }
       process.exit(code ?? 0);
     });
+  });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// emit — re-render a JSONL artifact into a target language
+//
+// Usage:
+//   xlibrary emit <actions.jsonl> -l robot -o output.robot
+//   xlibrary emit <actions.jsonl> -l selenium -o output.selenium.robot
+//
+// Reads the header from the JSONL artifact to default --test-name.
+// Fails with a clear message for ts/python (post-v0.2).
+// ─────────────────────────────────────────────────────────────────────────────
+program
+  .command('emit <actions.jsonl>')
+  .description(
+    'Re-render a recorded JSONL action artifact into a target language. ' +
+      'Supported targets in v0.2: robot, selenium.',
+  )
+  .requiredOption('-l, --lang <target>', 'Output target: robot | selenium (ts/python post-v0.2)')
+  .requiredOption('-o, --output <file>', 'Output file path')
+  .option('--test-name <name>', 'Override the test-case name (default: from JSONL header)')
+  .action(async (actionsFile: string, opts: Record<string, unknown>) => {
+    try {
+      await runEmit({
+        actionsFile,
+        lang: opts['lang'] as string,
+        output: opts['output'] as string,
+        testName: opts['testName'] as string | undefined,
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`\nxlibrary emit error: ${message}`);
+      process.exit(1);
+    }
   });
 
 // ─────────────────────────────────────────────────────────────────────────────
