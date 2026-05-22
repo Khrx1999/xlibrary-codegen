@@ -36,7 +36,12 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import type { RobotCodegenOptions, ActionInContext, LanguageGeneratorOptions } from '../types.js';
+import type {
+  RobotCodegenOptions,
+  RecorderLang,
+  ActionInContext,
+  LanguageGeneratorOptions,
+} from '../types.js';
 import { RobotFrameworkLanguageGenerator } from '../codegen/robotframework.js';
 import { SeleniumLibraryLanguageGenerator } from '../codegen/selenium.js';
 import { startViewerServer } from './viewer-server.js';
@@ -143,6 +148,57 @@ interface BrowserContextWithRecorder {
 }
 
 // ---------------------------------------------------------------------------
+// Language ID mapping
+// ---------------------------------------------------------------------------
+
+/**
+ * Map xlibrary's `--lang` option value to the Playwright recorder language ID.
+ *
+ * The language IDs come from the `LanguageGenerator.id` field in Playwright's
+ * built-in generators (vendor/playwright/.../codegen/languages.ts):
+ *
+ *   | xlibrary `lang`  | _enableRecorder `language` |
+ *   |------------------|---------------------------|
+ *   | `robot`          | `robotframework` / `jsonl` (chosen per directMode) |
+ *   | `selenium`       | `selenium`                |
+ *   | `ts`             | `playwright-test`         |
+ *   | `python`         | `python-pytest`           |
+ *
+ * For `robot` we return a sentinel `'robot'` and let `runRecorder` handle
+ * the directMode/JSONL split (same as before). For `selenium`, `ts`, and
+ * `python` we always use direct mode — Playwright's built-in generators are
+ * already registered in the bundle so no patcher is needed.
+ */
+export function langToPlaywrightId(lang: RecorderLang, directMode: boolean): string {
+  switch (lang) {
+    case 'robot':
+      return directMode ? 'robotframework' : 'jsonl';
+    case 'selenium':
+      return 'selenium';
+    case 'ts':
+      return 'playwright-test';
+    case 'python':
+      return 'python-pytest';
+  }
+}
+
+/**
+ * Human-readable label for the startup banner.
+ */
+function langLabel(lang: RecorderLang): string {
+  switch (lang) {
+    case 'robot':
+      return 'Robot Framework (Browser Library)';
+    case 'selenium':
+      return 'Robot Framework (SeleniumLibrary)';
+    case 'ts':
+      return 'TypeScript (Playwright Test)';
+    case 'python':
+      return 'Python (pytest-playwright)';
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main runner entry point
 // ---------------------------------------------------------------------------
 
@@ -161,6 +217,8 @@ export async function runRecorder(options: RobotCodegenOptions): Promise<void> {
   const showViewer = options.viewer !== false; // default on; --no-viewer disables
   const autoOpenViewer = options.openViewer ?? false; // off — Inspector gets a button instead
   const url = options.url;
+  // Default to 'robot' so existing callers that don't supply `lang` keep the same behaviour.
+  const lang: RecorderLang = options.lang ?? 'robot';
 
   // ── Select browser type ───────────────────────────────────────────────────
   const browserType =
@@ -308,7 +366,12 @@ export async function runRecorder(options: RobotCodegenOptions): Promise<void> {
     viewer?.broadcast(content);
 
     // Snapshot the action list for the Replay button.
-    latestActions = generator.getCapturedActions();
+    // Only available for the Robot Framework generator (direct mode, robot lang).
+    // For ts/python/selenium the built-in Playwright emitter owns the output;
+    // we don't have an RF generator instance to query.
+    if (lang === 'robot') {
+      latestActions = generator.getCapturedActions();
+    }
   }
 
   // =========================================================================
@@ -407,15 +470,24 @@ export async function runRecorder(options: RobotCodegenOptions): Promise<void> {
   // Unified periodic work + shutdown (works for both modes)
   // =========================================================================
 
-  const periodicWork = directMode ? tailOutputForPreview : flushOutput;
+  // For robot: use directMode to pick between tail (direct) and JSONL bridge.
+  // For ts / python / selenium: Playwright's own emitter always writes directly
+  // to outputPath — no JSONL bridge needed regardless of bundle-patcher status.
+  const periodicWork = lang === 'robot' && !directMode ? flushOutput : tailOutputForPreview;
 
   // ── Enable the Playwright recorder ────────────────────────────────────────
   const contextWithRecorder = context as unknown as BrowserContextWithRecorder;
 
+  // For `robot` in direct mode or JSONL fallback, use the existing split.
+  // For `ts` / `python` / `selenium` we always write to the output file directly
+  // using Playwright's own built-in emitter — no JSONL bridge needed.
+  const playwrightLangId = langToPlaywrightId(lang, directMode);
+  const recorderOutputFile = lang === 'robot' && !directMode ? tempJSONLPath : outputPath;
+
   await contextWithRecorder._enableRecorder({
-    language: directMode ? 'robotframework' : 'jsonl',
+    language: playwrightLangId,
     mode: 'recording',
-    outputFile: directMode ? outputPath : tempJSONLPath,
+    outputFile: recorderOutputFile,
     launchOptions: {},
     contextOptions: {},
     handleSIGINT: false,
@@ -482,9 +554,19 @@ export async function runRecorder(options: RobotCodegenOptions): Promise<void> {
     });
   }
 
+  // Describe the recording mode in the banner in a language-aware way.
+  const modeDescription: string = (() => {
+    if (lang === 'robot') {
+      return directMode ? 'direct (Inspector shows Robot Framework)' : 'JSONL bridge';
+    }
+    // ts / python / selenium: Playwright's built-in emitter runs direct.
+    return `direct (Playwright built-in: ${playwrightLangId})`;
+  })();
+
   console.log(
-    `\n🤖 Robot Codegen — recording in progress`,
-    `\n   Mode    : ${directMode ? 'direct (Inspector shows Robot Framework)' : 'JSONL bridge'}`,
+    `\n🤖 xlibrary codegen — recording in progress`,
+    `\n   Language: ${langLabel(lang)}`,
+    `\n   Mode    : ${modeDescription}`,
     `\n   Output  : ${outputPath}`,
     viewer
       ? autoOpenViewer
@@ -552,7 +634,9 @@ export async function runRecorder(options: RobotCodegenOptions): Promise<void> {
     }
 
     // Step 2 — grace period so ThrottledFile's synchronous write can complete.
-    if (!directMode) {
+    // Only needed for the JSONL bridge (robot target, bundle-patcher miss).
+    // For ts/python/selenium Playwright writes directly to outputPath — no temp file.
+    if (lang === 'robot' && !directMode) {
       dlog('shutdown: sleeping 200 ms for ThrottledFile grace period');
       await sleep(200);
     }

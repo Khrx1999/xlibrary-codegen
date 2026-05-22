@@ -13,6 +13,18 @@
 
 // ─── CLI / project options ────────────────────────────────────────────────────
 
+/**
+ * Target language / emitter for the recorder session.
+ *
+ * | Value      | Playwright language ID  | Output                            |
+ * |------------|-------------------------|-----------------------------------|
+ * | `robot`    | `robotframework` / `jsonl` | Robot Framework + Browser Library |
+ * | `selenium` | `selenium`              | Robot Framework + SeleniumLibrary |
+ * | `ts`       | `playwright-test`       | TypeScript Playwright Test file   |
+ * | `python`   | `python-pytest`         | Python pytest-playwright file     |
+ */
+export type RecorderLang = 'robot' | 'selenium' | 'ts' | 'python';
+
 export interface RobotCodegenOptions {
   url?: string;
   output?: string;
@@ -20,6 +32,11 @@ export interface RobotCodegenOptions {
   headed?: boolean;
   testName?: string;
   libraryImportLine?: string;
+  /**
+   * Target language / emitter for this recording session.
+   * Defaults to `'robot'` (Browser Library output).
+   */
+  lang?: RecorderLang;
   /** Suppress the live keyword preview printed to stdout during recording. */
   quiet?: boolean;
   /**
