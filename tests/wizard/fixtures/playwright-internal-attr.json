@@ -1,0 +1,25 @@
+{
+  "description": "Playwright-internal selector format internal:attr=[type=\"email\"] and internal:attr=[type=\"password\"]",
+  "actions": [
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "fill",
+        "selector": "internal:attr=[type=\"email\"]",
+        "text": "user@test.io",
+        "signals": []
+      },
+      "startTime": 1000
+    },
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "fill",
+        "selector": "internal:attr=[type=\"password\"]",
+        "text": "MyP@ssw0rd",
+        "signals": []
+      },
+      "startTime": 2000
+    }
+  ]
+}

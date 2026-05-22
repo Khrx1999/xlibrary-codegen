@@ -1,0 +1,15 @@
+{
+  "description": "FillAction on [type=email] — selector-context detection",
+  "actions": [
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "fill",
+        "selector": "input[type=email]",
+        "text": "qa@example.com",
+        "signals": []
+      },
+      "startTime": 1000
+    }
+  ]
+}

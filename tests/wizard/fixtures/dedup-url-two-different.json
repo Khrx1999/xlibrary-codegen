@@ -1,0 +1,23 @@
+{
+  "description": "Two different URLs — BASE_URL + URL_2",
+  "actions": [
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "navigate",
+        "url": "https://example.com/login",
+        "signals": []
+      },
+      "startTime": 500
+    },
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "navigate",
+        "url": "https://example.com/dashboard",
+        "signals": []
+      },
+      "startTime": 1500
+    }
+  ]
+}

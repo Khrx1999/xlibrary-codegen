@@ -1,0 +1,36 @@
+{
+  "description": "Values that should be skipped: single char, boolean string, key name",
+  "actions": [
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "fill",
+        "selector": "input[type=email]",
+        "text": "",
+        "signals": []
+      },
+      "startTime": 1000
+    },
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "fill",
+        "selector": "input[type=email]",
+        "text": "a",
+        "signals": []
+      },
+      "startTime": 1500
+    },
+    {
+      "frame": { "pageGuid": "p1", "pageAlias": "page", "framePath": [] },
+      "action": {
+        "name": "press",
+        "selector": "#form",
+        "key": "Enter",
+        "modifiers": 0,
+        "signals": []
+      },
+      "startTime": 2000
+    }
+  ]
+}
