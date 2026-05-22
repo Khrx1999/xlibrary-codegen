@@ -94,7 +94,7 @@ program
   )
   // Version is read from package.json at build time by the tsc output;
   // a literal here keeps `--version` working in dev (tsx) and dist alike.
-  .version('0.1.6');
+  .version('0.2.0');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // codegen — the main (and currently only) subcommand

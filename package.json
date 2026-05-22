@@ -1,7 +1,7 @@
 {
   "name": "xlibrary",
-  "version": "0.1.6",
-  "description": "Robot Framework + Browser Library codegen — mirror of Playwright codegen that emits .robot files",
+  "version": "0.2.0",
+  "description": "Multi-language test codegen — record once, emit Robot Framework / SeleniumLibrary / Playwright TS / pytest-playwright with Self-Healing locators and patch/extract workflows",
   "license": "MIT",
   "author": {
     "name": "Tassana Khrueawan",
