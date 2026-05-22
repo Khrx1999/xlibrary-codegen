@@ -58,6 +58,14 @@ export interface JsonlEntry {
   framePath?: string[];
   // ── added by jsonl generator ───────────────────────────────────────────
   locator?: unknown;
+  /**
+   * Selector candidates — added by bundle-patcher patch #4 (selectorCandidates).
+   * Mirrors `ActionWithSelector.alternatives` in src/types.ts.
+   * Present only when patch #4 is active and `generateSelector()` produced
+   * more than one candidate (i.e. `multiple: true` was used in the injected
+   * recorder script).
+   */
+  alternatives?: string[];
 }
 
 /**

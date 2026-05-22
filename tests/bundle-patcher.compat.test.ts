@@ -25,7 +25,10 @@ import { createRequire } from 'node:module';
 // loads — must happen at the very top of this file.
 import '../src/recorder/bundle-patcher.js';
 
-import { wasBundlePatchSuccessful } from '../src/recorder/bundle-patcher.js';
+import {
+  wasBundlePatchSuccessful,
+  wasSelectorCandidatesPatchSuccessful,
+} from '../src/recorder/bundle-patcher.js';
 
 describe('bundle-patcher compatibility with bundled playwright-core', () => {
   beforeAll(async () => {
@@ -47,5 +50,17 @@ describe('bundle-patcher compatibility with bundled playwright-core', () => {
     // Supported range in package.json: ">=1.49.0 <1.61.0".
     // Adjust both this matcher AND the package.json range together.
     expect(pkg.version).toMatch(/^1\.(49|5\d|60)\./);
+  });
+
+  it('patch #4 (selectorCandidates regex) matches the bundled coreBundle.js', () => {
+    // If this fails, the `_ariaSnapshot` internals in pollingRecorderSource.ts
+    // (stored as source5 in coreBundle.js) have drifted. Update the regex
+    // patterns in patchSelectorCandidates() in src/recorder/bundle-patcher.ts
+    // and re-pin the tested version range in package.json.
+    //
+    // Both regex targets must match for this to pass:
+    //   1. RE_MULTIPLE — the generateSelector call with testIdAttributeName
+    //   2. RE_RETURN   — the unique _ariaSnapshot return statement
+    expect(wasSelectorCandidatesPatchSuccessful()).toBe(true);
   });
 });
