@@ -20,7 +20,7 @@
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { WebSocketServer } from 'ws';
+import { WebSocketServer, WebSocket } from 'ws';
 import { buildViewerPayload } from './viewer-renderer.js';
 
 // ─── HTML ─────────────────────────────────────────────────────────────────────
@@ -132,7 +132,7 @@ export async function startViewerServer(preferredPort = 0): Promise<ViewerServer
   wss.on('connection', (client) => {
     // Send current replay state to the freshly-connected viewer so the
     // replay panel renders without needing the runner to broadcast again.
-    if (lastReplayState && client.readyState === 1) {
+    if (lastReplayState && client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify({ type: 'replay-state', state: lastReplayState }));
     }
 
@@ -182,7 +182,7 @@ export async function startViewerServer(preferredPort = 0): Promise<ViewerServer
     });
     for (const client of wss.clients) {
       // readyState 1 === OPEN (matches ws.WebSocket.OPEN constant)
-      if (client.readyState === 1) {
+      if (client.readyState === WebSocket.OPEN) {
         client.send(message, () => {
           /* ignore send errors */
         });
@@ -194,7 +194,7 @@ export async function startViewerServer(preferredPort = 0): Promise<ViewerServer
     lastReplayState = state;
     const message = JSON.stringify({ type: 'replay-state', state });
     for (const client of wss.clients) {
-      if (client.readyState === 1) {
+      if (client.readyState === WebSocket.OPEN) {
         client.send(message, () => {
           /* ignore */
         });

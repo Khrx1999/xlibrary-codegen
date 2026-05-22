@@ -30,14 +30,13 @@
  */
 
 import type { StepIndex, ParsedStep } from './step-parser.js';
+import type { LangTarget } from '../types.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Language of the source file, inferred from the file extension by the caller. */
-export type SourceLang = 'robot' | 'selenium' | 'ts' | 'python';
-
 /**
  * Callback for operations that need new step content (replace, insert).
  *
@@ -62,7 +61,7 @@ export type SourceLang = 'robot' | 'selenium' | 'ts' | 'python';
  *   - This lets unit-tests verify splice logic without spawning a browser.
  */
 export type NewStepProvider = (context: {
-  sourceLang: SourceLang;
+  sourceLang: LangTarget;
   targetStep: number;
   operation: 'replace' | 'insert-after' | 'insert-before';
 }) => Promise<string>;
@@ -75,7 +74,7 @@ export type NewStepProvider = (context: {
  * into the file, keeps the xlib marker format valid for downstream tools.
  */
 export function stubNewStepProvider(context: {
-  sourceLang: SourceLang;
+  sourceLang: LangTarget;
   targetStep: number;
   operation: 'replace' | 'insert-after' | 'insert-before';
 }): string {

@@ -92,9 +92,8 @@ program
   .description(
     'Robot Framework + Browser Library codegen — record browser interactions and emit a .robot test file.',
   )
-  // Version is read from package.json at build time by the tsc output;
-  // a literal here keeps `--version` working in dev (tsx) and dist alike.
-  .version('0.2.0');
+  // Read version dynamically from package.json so we don't drift on bumps.
+  .version((requireFromHere('../package.json') as { version: string }).version);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // codegen — the main (and currently only) subcommand
@@ -166,6 +165,17 @@ program
       saveActions,
       extractData: opts['extractData'] === true,
     };
+
+    // Fail-fast: --save-actions + -l ts/python writes an empty artifact today
+    // because xlibrary doesn't own those emitters (Playwright handles them).
+    // Reject explicitly so users don't ship a useless .jsonl.
+    if (saveActions !== undefined && (lang === 'ts' || lang === 'python')) {
+      console.error(`xlibrary codegen: --save-actions is not yet supported for -l ${lang}.`);
+      console.error("  Playwright owns the ts/python emitters, so xlibrary can't capture");
+      console.error('  the action stream for re-emission. Record with -l robot');
+      console.error('  to get a sidecar JSONL, then `xlibrary emit -l ts` (post-v0.2).');
+      process.exit(1);
+    }
 
     try {
       await runRecorder(options);

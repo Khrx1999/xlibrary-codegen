@@ -1,6 +1,6 @@
 {
   "name": "xlibrary",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Multi-language test codegen — record once, emit Robot Framework / SeleniumLibrary / Playwright TS / pytest-playwright with Self-Healing locators and patch/extract workflows",
   "license": "MIT",
   "author": {

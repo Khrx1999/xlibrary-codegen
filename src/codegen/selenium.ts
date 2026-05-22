@@ -128,9 +128,13 @@ export class SeleniumLibraryLanguageGenerator {
   // viewer's Replay button — same contract as RobotFrameworkLanguageGenerator.
   private _capturedActions: ActionInContext[] = [];
 
-  /** Return the full action list captured during this render pass. */
+  /**
+   * Return the full action list captured during this render pass.
+   * Returns a defensive copy — mirrors RobotFrameworkLanguageGenerator's
+   * contract so callers can't mutate the emitter's internal state.
+   */
   getCapturedActions(): ActionInContext[] {
-    return this._capturedActions;
+    return [...this._capturedActions];
   }
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -166,6 +170,11 @@ export class SeleniumLibraryLanguageGenerator {
     const { action } = actionInContext;
     const fmt = new RobotFormatter();
 
+    // Capture EVERY action (including skipped ones) — matches the RF emitter's
+    // contract so the Replay engine sees identical action lists across langs.
+    // Push BEFORE early-return paths; consumers decide what to filter.
+    this._capturedActions.push(actionInContext);
+
     for (const line of signalLinesBefore(action.signals, INDENT)) {
       fmt.rawLine(line);
     }
@@ -177,9 +186,6 @@ export class SeleniumLibraryLanguageGenerator {
     }
 
     if (!emitted) return '';
-
-    // Capture for Replay — same contract as RF emitter.
-    this._capturedActions.push(actionInContext);
 
     // Increment step counter — only for actions that produce output.
     this._stepCounter += 1;

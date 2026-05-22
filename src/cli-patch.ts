@@ -40,7 +40,7 @@ import {
   parseMoveSpec,
   stubNewStepProvider,
 } from './patch/index.js';
-import type { StepIndex, ParsedStep, SourceLang, NewStepProvider } from './patch/index.js';
+import type { StepIndex, ParsedStep, LangTarget, NewStepProvider } from './patch/index.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public options type — Commander fills this
@@ -219,7 +219,7 @@ async function runReplaceStep(
   sourceContent: string,
   index: StepIndex,
   stepNum: number,
-  sourceLang: SourceLang,
+  sourceLang: LangTarget,
   provider: NewStepProvider,
 ): Promise<number> {
   const newContent = await provider({
@@ -245,7 +245,7 @@ async function runReplaceRange(
   index: StepIndex,
   fromNum: number,
   toNum: number,
-  sourceLang: SourceLang,
+  sourceLang: LangTarget,
   provider: NewStepProvider,
 ): Promise<number> {
   const newContent = await provider({
@@ -270,7 +270,7 @@ async function runInsertAfter(
   sourceContent: string,
   index: StepIndex,
   stepNum: number,
-  sourceLang: SourceLang,
+  sourceLang: LangTarget,
   provider: NewStepProvider,
 ): Promise<number> {
   const newContent = await provider({
@@ -295,7 +295,7 @@ async function runInsertBefore(
   sourceContent: string,
   index: StepIndex,
   stepNum: number,
-  sourceLang: SourceLang,
+  sourceLang: LangTarget,
   provider: NewStepProvider,
 ): Promise<number> {
   const newContent = await provider({
@@ -500,7 +500,7 @@ function writeResult(
  *   .py                   → python
  *   other                 → robot (safe default)
  */
-export function inferLang(filePath: string): SourceLang {
+export function inferLang(filePath: string): LangTarget {
   const base = basename(filePath).toLowerCase();
   if (base.endsWith('.selenium.robot')) return 'selenium';
   const ext = extname(base);

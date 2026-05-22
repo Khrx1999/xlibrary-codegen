@@ -16,7 +16,7 @@
  *     stable even when the generator skips them.
  */
 
-import type { ActionInContext } from '../types.js';
+import type { ActionInContext, LangTarget } from '../types.js';
 import { RobotFrameworkLanguageGenerator } from '../codegen/robotframework.js';
 import { SeleniumLibraryLanguageGenerator } from '../codegen/selenium.js';
 
@@ -24,11 +24,9 @@ import { SeleniumLibraryLanguageGenerator } from '../codegen/selenium.js';
 // Public contract
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type SupportedLang = 'robot' | 'selenium' | 'ts' | 'python';
-
 export interface FormatOptions {
   /** Target source language / library. Drives which emitter is used. */
-  lang: SupportedLang;
+  lang: LangTarget;
   /**
    * The xlib:step number to assign to the FIRST action in the list.
    * Subsequent actions get startingStepNumber + 1, + 2, etc.

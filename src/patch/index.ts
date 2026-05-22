@@ -9,7 +9,8 @@
 export type { ParsedStep, StepIndex, FuzzyMatch } from './step-parser.js';
 export { parseSteps, findStepsByContent } from './step-parser.js';
 
-export type { SourceLang, NewStepProvider } from './operations.js';
+export type { NewStepProvider } from './operations.js';
+export type { LangTarget } from '../types.js';
 export {
   renumberSteps,
   replaceStep,
