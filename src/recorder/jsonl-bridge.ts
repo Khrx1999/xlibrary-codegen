@@ -22,7 +22,15 @@
 
 import { debuglog } from 'node:util';
 import type { Action, ActionInContext } from '../types.js';
-import type { RobotFrameworkLanguageGenerator } from '../codegen/robotframework.js';
+
+/**
+ * Minimal interface that `jsonlEntryToStepLines` needs from any generator.
+ * Both `RobotFrameworkLanguageGenerator` and `SeleniumLibraryLanguageGenerator`
+ * satisfy this structurally.
+ */
+export interface ActionGenerator {
+  generateAction(actionInContext: ActionInContext): string;
+}
 
 const dlog = debuglog('xlibrary');
 
@@ -96,10 +104,7 @@ export function jsonlEntryToActionInContext(entry: JsonlEntry): ActionInContext 
  * `# ERROR` (visible during review) and the underlying error is logged to
  * stderr so the user actually sees it.
  */
-export function jsonlEntryToStepLines(
-  entry: JsonlEntry,
-  generator: RobotFrameworkLanguageGenerator,
-): string[] {
+export function jsonlEntryToStepLines(entry: JsonlEntry, generator: ActionGenerator): string[] {
   const actionInContext = jsonlEntryToActionInContext(entry);
   if (!actionInContext) {
     dlog(

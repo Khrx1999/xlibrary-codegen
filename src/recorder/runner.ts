@@ -33,7 +33,7 @@ import { debuglog } from 'node:util';
 import { chromium, firefox, webkit } from 'playwright-core';
 import { writeFile, readFile, mkdir, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 
 import type { RobotCodegenOptions, ActionInContext, LanguageGeneratorOptions } from '../types.js';
@@ -57,6 +57,11 @@ import {
   jsonlEntryToStepLines,
   parseJsonlContent,
 } from './jsonl-bridge.js';
+import {
+  buildArtifactHeader,
+  buildArtifactContent,
+  buildArtifactFromBridgeContent,
+} from './jsonl-artifact.js';
 
 // ---------------------------------------------------------------------------
 // Debug logger — activate with:  NODE_DEBUG=xlibrary node dist/cli.js …
@@ -161,6 +166,17 @@ export async function runRecorder(options: RobotCodegenOptions): Promise<void> {
   const showViewer = options.viewer !== false; // default on; --no-viewer disables
   const autoOpenViewer = options.openViewer ?? false; // off — Inspector gets a button instead
   const url = options.url;
+
+  // Resolve the JSONL artifact path from --save-actions
+  // true (bare flag) → <output>.jsonl next to the output file
+  // string → use as-is
+  // undefined → no artifact written
+  const artifactPath: string | undefined =
+    options.saveActions === true
+      ? outputPath.replace(/(\.[^.]+)?$/, (ext) => (ext ? `${ext}.jsonl` : '.jsonl'))
+      : typeof options.saveActions === 'string'
+        ? options.saveActions
+        : undefined;
 
   // ── Select browser type ───────────────────────────────────────────────────
   const browserType =
@@ -575,6 +591,42 @@ export async function runRecorder(options: RobotCodegenOptions): Promise<void> {
       console.log(`⚠️  Saved (with errors): ${outputPath}`);
     } else {
       console.log(`✅  Saved: ${outputPath}`);
+    }
+
+    // Step 3b — write JSONL artifact (--save-actions)
+    if (artifactPath) {
+      try {
+        const header = buildArtifactHeader(browserName, testName);
+
+        let artifactContent: string;
+        if (directMode) {
+          // Direct mode: generator has captured all actions internally.
+          artifactContent = buildArtifactContent(header, latestActions);
+        } else {
+          // JSONL bridge mode: the temp file already has all action lines.
+          // Re-read it one last time (final flush already ran, so it's complete).
+          let tempContent = '';
+          try {
+            tempContent = await readFile(tempJSONLPath, 'utf8');
+          } catch {
+            // Temp file may have been deleted already or never written (empty session).
+            // Fall back to building from latestActions.
+          }
+          if (tempContent.trim()) {
+            artifactContent = buildArtifactFromBridgeContent(header, tempContent);
+          } else {
+            artifactContent = buildArtifactContent(header, latestActions);
+          }
+        }
+
+        // Ensure the parent directory exists (user may specify a nested path).
+        await mkdir(dirname(artifactPath), { recursive: true });
+        await writeFile(artifactPath, artifactContent, 'utf8');
+        console.log(`📄  Actions saved: ${artifactPath}`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`  ⚠  Could not write JSONL artifact (${artifactPath}): ${msg}`);
+      }
     }
 
     if (openAfter && existsSync(outputPath)) {
